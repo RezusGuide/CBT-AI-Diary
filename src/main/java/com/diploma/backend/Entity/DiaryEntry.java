@@ -1,0 +1,31 @@
+package com.diploma.backend.Entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Data;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "entries")
+@Data
+public class DiaryEntry {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(columnDefinition = "TEXT")
+    private String text;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(columnDefinition = "TEXT")
+    private String aiAnalysis;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
+
+    public void setUserId(Long userId) {
+    }
+}
