@@ -25,8 +25,4 @@ public class DreamEntry {
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
-
-    public void setContent(String content) {
-
-    }
 }

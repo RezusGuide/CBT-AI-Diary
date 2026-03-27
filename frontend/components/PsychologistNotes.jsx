@@ -49,7 +49,7 @@ export default function PsychologistNotes() {
     };
 
     const handleEdit = (note) => {
-        setFormData({ title: note.title, content: note.content, clientId: note.client.id });
+        setFormData({ title: note.title, content: note.content, clientId: note.client?.id || '' });
         setEditingId(note.id);
         setIsCreating(true);
     };

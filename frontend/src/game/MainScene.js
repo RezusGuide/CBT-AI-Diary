@@ -25,20 +25,13 @@ export default class MainScene extends Phaser.Scene {
         this.textures.addBase64('weed', WEED_ASSET);
     }
 
-    async create() {
-        // 1. СОЗДАЕМ ФОН (Тайловый спрайт - повторяющаяся текстура)
-        // Используем tileSprite вместо rectangle, чтобы замостить фон травой
+    create() {
         this.bg = this.add.tileSprite(400, 300, 800, 600, 'grass');
-
-        // 2. СОЗДАЕМ ИГРОКА (Спрайт)
-        // Используем physics.add.sprite вместо rectangle
         this.player = this.physics.add.sprite(400, 300, 'player');
         this.player.setCollideWorldBounds(true);
-        // Немного уменьшим хитбокс, чтобы было удобнее ходить
         this.player.body.setSize(20, 20);
         this.player.body.setOffset(2, 6);
 
-        // 3. Управление
         this.cursors = this.input.keyboard.createCursorKeys();
         this.wasd = this.input.keyboard.addKeys({
             up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -50,15 +43,19 @@ export default class MainScene extends Phaser.Scene {
 
         this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
 
-        // 4. ЗАГРУЖАЕМ ДАННЫЕ О МИРЕ
+        this.weeds = this.physics.add.staticGroup();
+        this.physics.add.overlap(this.player, this.weeds, (player, weed) => {
+            if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+                weed.destroy();
+                window.dispatchEvent(new CustomEvent('weed-pulled'));
+            }
+        });
+
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        try {
-            const res = await fetch(`/api/gamification/world-state/${user.id}`);
-            const state = await res.json();
-            this.buildWorld(state);
-        } catch (e) {
-            this.buildWorld({ moodScore: 5, weedsCount: 3 });
-        }
+        fetch(`/api/gamification/world-state/${user.id}`)
+            .then(res => res.json())
+            .then(state => this.buildWorld(state))
+            .catch(e => this.buildWorld({ moodScore: 5, weedsCount: 3 }));
     }
 
     buildWorld(state) {
@@ -70,23 +67,11 @@ export default class MainScene extends Phaser.Scene {
             this.bg.setTint(0x556677);
         }
 
-        // Б. СОЗДАЕМ СОРНЯКИ (Спрайты)
-        this.weeds = this.physics.add.staticGroup();
         for (let i = 0; i < state.weedsCount; i++) {
             let x = Phaser.Math.Between(50, 750);
             let y = Phaser.Math.Between(50, 550);
-            // Создаем спрайт сорняка вместо прямоугольника
-            let weed = this.add.sprite(x, y, 'weed');
-            this.weeds.add(weed);
+            this.weeds.create(x, y, 'weed');
         }
-
-        // В. ВЗАИМОДЕЙСТВИЕ
-        this.physics.add.overlap(this.player, this.weeds, (player, weed) => {
-            if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-                weed.destroy();
-                window.dispatchEvent(new CustomEvent('weed-pulled'));
-            }
-        });
     }
 
     update() {
