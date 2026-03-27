@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
     Optional<MoodEntry> findByUserIdAndDate(Long userId, LocalDate date);
+    java.util.List<MoodEntry> findByUserIdOrderByDateDesc(Long userId);
 }

@@ -18,13 +18,24 @@ public class AssignmentController {
 
     // Психолог создает задание
     @PostMapping
-    public Assignment create(@RequestBody Map<String, Object> payload) {
-        Assignment a = new Assignment();
-        a.setTitle((String) payload.get("title"));
-        a.setDescription((String) payload.get("description"));
-        a.setPsychologist(userRepository.findById(Long.valueOf(payload.get("psychologistId").toString())).orElseThrow());
-        a.setClient(userRepository.findById(Long.valueOf(payload.get("clientId").toString())).orElseThrow());
-        return assignmentRepository.save(a);
+    public ResponseEntity<?> create(@RequestBody Map<String, Object> payload) {
+        try {
+            Assignment a = new Assignment();
+            a.setTitle((String) payload.get("title"));
+            a.setDescription((String) payload.get("description"));
+            
+            Long psychId = Long.valueOf(payload.get("psychologistId").toString());
+            Long clientId = Long.valueOf(payload.get("clientId").toString());
+            
+            a.setPsychologist(userRepository.findById(psychId)
+                    .orElseThrow(() -> new RuntimeException("Психолог не найден")));
+            a.setClient(userRepository.findById(clientId)
+                    .orElseThrow(() -> new RuntimeException("Клиент не найден")));
+            
+            return ResponseEntity.ok(assignmentRepository.save(a));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Ошибка при создании задания: " + e.getMessage());
+        }
     }
 
     // Клиент получает свои задания

@@ -5,6 +5,8 @@ import com.diploma.backend.Entity.User;
 import com.diploma.backend.repository.DreamEntryRepository;
 import com.diploma.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
@@ -18,6 +20,7 @@ public class DreamController {
 
     private final DreamEntryRepository dreamRepository;
     private final UserRepository userRepository;
+    private final ChatClient.Builder chatClientBuilder;
 
     @GetMapping
     public List<DreamEntry> getDreams(@RequestParam Long userId) {
@@ -37,13 +40,23 @@ public class DreamController {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String prompt = "Ты - толкователь снов, опирающийся на психологию Юнга и Фрейда, но дающий современные трактовки. " +
-                "Проанализируй этот сон: \"" + text + "\". " +
-                "Выдели ключевые символы и объясни, что они могут значить для подсознания. Будь краток.";
+        ChatClient chatClient = chatClientBuilder.build();
+String promptStr = "Ты - толкователь снов, опирающийся на психологию Юнга и Фрейда, но дающий современные трактовки. " +
+        "Проанализируй этот сон: \"" + text + "\". " +
+        "Выдели ключевые символы и объясни, что они могут значить для подсознания. Будь краток.";
 
+String interpretation;
+try {
+    interpretation = chatClient.prompt(new Prompt(promptStr))
+            .call()
+            .content();
+} catch (Exception e) {
+            interpretation = "Ошибка интерпретации: " + e.getMessage();
+        }
 
         DreamEntry entry = new DreamEntry();
         entry.setText(text);
+        entry.setInterpretation(interpretation);
         entry.setCreatedAt(LocalDateTime.now());
         entry.setUser(user);
 
@@ -63,8 +76,7 @@ public class DreamController {
         try {
             var dream = dreamRepository.findById(id).orElseThrow();
 
-            // Замени setContent на setText, если в сущности поле называется text
-            dream.setContent(payload.get("content"));
+            dream.setText(payload.get("text") != null ? payload.get("text") : payload.get("content"));
 
             return ResponseEntity.ok(dreamRepository.save(dream));
         } catch (Exception e) {
