@@ -19,5 +19,7 @@ COPY --from=builder /app/build/libs/*.jar /app/
 # Expose the web port
 EXPOSE 8080
 
+ENV PORT=8080
+
 # Find and run the Spring Boot executable jar (ignoring the lightweight -plain.jar)
-ENTRYPOINT ["sh", "-c", "java -jar $(find . -maxdepth 1 -name '*.jar' -not -name '*plain.jar' | head -n 1)"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT} -jar $(find . -maxdepth 1 -name '*.jar' -not -name '*plain.jar' | head -n 1)"]
