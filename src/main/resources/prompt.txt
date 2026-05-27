@@ -1,0 +1,41 @@
+# MISSION: RAILWAY DEPLOYMENT CLEANUP & GIT SNAPSHOT
+You are an expert DevOps Engineer. I need to deploy the Java Spring Boot backend of this monorepo to Railway, but previous builds failed because Railway got confused by the frontend `package.json`.
+
+You must execute the following steps using PowerShell commands to clean the repository, force a Java Docker build, and push a completely fresh Git snapshot to the `final` branch.
+
+## STEP 1: REMOVE CONFLICTS
+1. Check if `railpack.json` exists in the project root. If it does, delete it. It is causing build plan failures.
+
+## STEP 2: CREATE THE DOCKERFILE
+1. Create or overwrite a file named exactly `Dockerfile` (no extension) in the project root.
+2. Write the following exact multi-stage build configuration into it:
+
+FROM eclipse-temurin:17-jdk-jammy AS builder
+WORKDIR /app
+COPY . .
+RUN chmod +x ./gradlew
+RUN ./gradlew clean bootJar -x test
+
+FROM eclipse-temurin:17-jre-jammy
+WORKDIR /app
+COPY --from=builder /app/build/libs/*.jar /app/
+EXPOSE 8080
+ENTRYPOINT ["sh", "-c", "java -jar $(find . -maxdepth 1 -name '*.jar' -not -name '*plain.jar' | head -n 1)"]
+
+## STEP 3: VERIFY DATABASE CONFIGURATION
+1. Read `src/main/resources/application.properties`.
+2. Ensure the line `spring.profiles.default=local` is deleted or commented out (so it doesn't force the local H2 database).
+3. Ensure it is using the Neon PostgreSQL credentials previously configured. Do NOT change the database URL/credentials if they are already pointing to Neon.
+
+## STEP 4: GIT CLEAN SLATE & FORCE PUSH
+Execute these Git commands sequentially to create an orphan branch, snapshot the exact current state of the directory, and overwrite the remote `final` branch:
+1. `git checkout --orphan temp-clean-state`
+2. `git add -A`
+3. `git commit -m "Production Backend: Dockerfile setup and clean slate"`
+4. `git branch -M final`
+5. `git push -f origin final`
+
+## EXECUTION RULES
+- Do NOT touch or modify anything inside the `frontend/` folder.
+- Execute these tasks silently and autonomously.
+- When finished, output a summary confirming that the `Dockerfile` was created and the force push to `origin final` was successful.
