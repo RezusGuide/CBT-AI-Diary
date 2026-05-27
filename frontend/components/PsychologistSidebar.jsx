@@ -8,38 +8,58 @@ const PsychologistSidebar = () => {
 
     const isActive = (path) => location.pathname === path;
 
+    const handleLogout = () => {
+        localStorage.clear();
+        window.location.href = '/login';
+    };
+
     return (
-        <div className="sidebar" style={{backgroundColor: '#1a2a3a'}}> {/* Чуть темнее для отличия */}
-            <Link to="/psychologist/profile" style={{textDecoration: 'none'}}>
-                <div className="user-profile">
-                    <div className="avatar-circle" style={{overflow: 'hidden', background: '#3498db'}}>
-                        {user.photoUrl ? (
-                            <img src={`http://localhost:8080${user.photoUrl}`} style={{width:'100%', height:'100%', objectFit:'cover'}} />
-                        ) : (
-                            <span style={{color: 'white'}}>{displayName.charAt(0).toUpperCase()}</span>
-                        )}
-                    </div>
-                    <h3 style={{color: 'white'}}>{displayName}</h3>
-                    <div style={{fontSize: '0.7rem', color: '#bdc3c7'}}>Панель специалиста</div>
+        <div className="sidebar">
+            <div className="sidebar-brand">
+                <div className="sidebar-brand-icon">🩺</div>
+                <div>
+                    <div className="sidebar-brand-name">CBT AI Diary</div>
+                    <div className="sidebar-brand-sub">Professional Panel</div>
+                </div>
+            </div>
+
+            <Link to="/psychologist/profile" className="sidebar-user">
+                <div className="user-avatar" style={{ background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' }}>
+                    {user.photoUrl ? (
+                        <img src={`${import.meta.env.VITE_API_BASE_URL || ''}${user.photoUrl}`} alt="User" />
+                    ) : (
+                        <span>{displayName.charAt(0).toUpperCase()}</span>
+                    )}
+                </div>
+                <div style={{ overflow: 'hidden' }}>
+                    <div className="user-name">{displayName}</div>
+                    <div className="user-role">Психолог</div>
                 </div>
             </Link>
 
-            <nav className="nav-links">
-                <Link to="/psychologist" className={`nav-item ${isActive('/psychologist') ? 'highlight-item' : ''}`}>🏠 <span>Рабочий стол</span></Link>
-                <Link to="/psychologist/clients" className={`nav-item ${isActive('/psychologist/clients') ? 'highlight-item' : ''}`}>👥 <span>Мои клиенты</span></Link>
-                <Link to="/psychologist/notes" className={`nav-item ${isActive('/psychologist/notes') ? 'highlight-item' : ''}`}>📝 <span>Заметки</span></Link>
-                <Link to="/psychologist/assignments" className={`nav-item ${isActive('/psychologist/assignments') ? 'active' : ''}`}>
-                    🎯 <span>Назначить задания</span>
+            <nav className="nav-section">
+                <Link to="/psychologist" className={`nav-item ${isActive('/psychologist') ? 'active' : ''}`}>
+                    <span className="nav-icon">🏠</span> <span>Рабочий стол</span>
                 </Link>
-                <Link to="/psychologist/chat" className={`nav-item ${isActive('/psychologist/chat') ? 'highlight-item' : ''}`}>💬 <span>Чат</span></Link>
-                <button
-                    onClick={() => {localStorage.clear(); window.location.href='/login'}}
-                    className="nav-item logout-btn"
-                    style={{background: 'transparent', color: 'rgba(255,255,255,0.7)', boxShadow: 'none'}}
-                >
-                    🚪 <span>Выход</span>
-                </button>
+                <Link to="/psychologist/clients" className={`nav-item ${isActive('/psychologist/clients') ? 'active' : ''}`}>
+                    <span className="nav-icon">👥</span> <span>Мои клиенты</span>
+                </Link>
+                <Link to="/psychologist/notes" className={`nav-item ${isActive('/psychologist/notes') ? 'active' : ''}`}>
+                    <span className="nav-icon">📝</span> <span>Заметки</span>
+                </Link>
+                <Link to="/psychologist/assignments" className={`nav-item ${isActive('/psychologist/assignments') ? 'active' : ''}`}>
+                    <span className="nav-icon">🎯</span> <span>Задания</span>
+                </Link>
+                <Link to="/psychologist/chat" className={`nav-item ${isActive('/psychologist/chat') ? 'active' : ''}`}>
+                    <span className="nav-icon">💬</span> <span>Чат</span>
+                </Link>
             </nav>
+
+            <div className="sidebar-footer">
+                <button onClick={handleLogout} className="logout-btn">
+                    <span className="nav-icon">🚪</span> <span>Выход</span>
+                </button>
+            </div>
         </div>
     );
 };

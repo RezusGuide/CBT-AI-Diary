@@ -36,62 +36,83 @@ export default function PsychologistNotes() {
     };
 
     return (
-        <div className="animate-in">
-            <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+            <header style={{ marginBottom: 'var(--space-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '2rem' }}>Личные заметки</h1>
-                    <p style={{ color: 'var(--slate-500)' }}>Конфиденциальные записи о прогрессе сессий</p>
+                    <h1>Личные заметки</h1>
+                    <p style={{ color: 'var(--text-muted)' }}>Конфиденциальные записи о прогрессе сессий</p>
                 </div>
                 <button className="btn-primary" onClick={() => setIsCreating(true)}>+ Новая заметка</button>
             </header>
 
             {isCreating && (
-                <div className="glass-card animate-up" style={{ marginBottom: '3rem', background: 'var(--p-100)', border: 'none' }}>
+                <div className="card" style={{ marginBottom: 'var(--space-xl)', background: 'var(--bg-surface-2)' }}>
+                    <h3 className="card-header">Создать заметку</h3>
                     <form onSubmit={handleSubmit}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                            <input 
-                                placeholder="Заголовок (напр. Сессия №5)" 
-                                value={formData.title}
-                                onChange={e => setFormData({...formData, title: e.target.value})}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+                            <div>
+                                <label className="input-label">Заголовок</label>
+                                <input 
+                                    className="input-field"
+                                    placeholder="Напр. Сессия №5" 
+                                    value={formData.title}
+                                    onChange={e => setFormData({...formData, title: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="input-label">Клиент</label>
+                                <select 
+                                    className="input-field"
+                                    value={formData.clientId}
+                                    onChange={e => setFormData({...formData, clientId: e.target.value})}
+                                    required
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <option value="">Выберите клиента...</option>
+                                    {clients.map(c => <option key={c.id} value={c.id}>{c.fullName || c.username}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div style={{ marginBottom: 'var(--space-lg)' }}>
+                            <label className="input-label">Содержание</label>
+                            <textarea 
+                                className="input-field"
+                                placeholder="Напишите ваши наблюдения..." 
+                                value={formData.content}
+                                onChange={e => setFormData({...formData, content: e.target.value})}
+                                style={{ height: '150px', resize: 'none' }}
                                 required
                             />
-                            <select 
-                                value={formData.clientId}
-                                onChange={e => setFormData({...formData, clientId: e.target.value})}
-                                required
-                            >
-                                <option value="">Выберите клиента...</option>
-                                {clients.map(c => <option key={c.id} value={c.id}>{c.fullName || c.username}</option>)}
-                            </select>
                         </div>
-                        <textarea 
-                            placeholder="Напишите ваши наблюдения..." 
-                            value={formData.content}
-                            onChange={e => setFormData({...formData, content: e.target.value})}
-                            style={{ height: '200px', marginBottom: '1.5rem', background: 'white' }}
-                            required
-                        />
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button type="submit" className="btn-primary">Сохранить заметку</button>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button type="submit" className="btn-primary">Сохранить</button>
                             <button type="button" className="btn-secondary" onClick={() => setIsCreating(false)}>Отмена</button>
                         </div>
                     </form>
                 </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 'var(--space-lg)' }}>
                 {notes.map(note => (
-                    <div key={note.id} className="glass-card" style={{ padding: '2rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                    <div key={note.id} className="card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-md)' }}>
                             <div>
                                 <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{note.title}</h3>
-                                <small style={{ color: 'var(--p-600)', fontWeight: '700' }}>Клиент: {note.client?.fullName || '—'}</small>
+                                <div className="badge badge-violet" style={{ marginTop: '6px' }}>Клиент: {note.client?.fullName || '—'}</div>
                             </div>
-                            <small style={{ color: 'var(--slate-400)' }}>{new Date(note.createdAt).toLocaleDateString()}</small>
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(note.createdAt).toLocaleDateString()}</span>
                         </div>
-                        <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--slate-700)', lineHeight: 1.6 }}>{note.content}</p>
+                        <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{note.content}</p>
                     </div>
                 ))}
+                
+                {notes.length === 0 && !isCreating && (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 'var(--space-2xl)', color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.2 }}>📝</div>
+                        <p>Список заметок пока пуст.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

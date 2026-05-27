@@ -30,59 +30,70 @@ export default function ClientAssignments() {
     };
 
     return (
-        <div className="diary-container animate-in">
-            <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
-                <h1 style={{ color: 'var(--p-600)' }}>Моя Программа</h1>
-                <p style={{ color: 'var(--slate-500)' }}>Маленькие шаги ведут к большим изменениям</p>
+        <div style={{ maxWidth: '850px', margin: '0 auto' }}>
+            <header style={{ marginBottom: 'var(--space-xl)' }}>
+                <h1>Моя Программа</h1>
+                <p style={{ color: 'var(--text-muted)' }}>Маленькие шаги ведут к большим изменениям</p>
             </header>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                 {assignments.map(item => (
-                    <div key={item.id} className="glass-card" style={{ 
-                        borderLeft: item.isCompleted ? '6px solid var(--success)' : '6px solid var(--p-600)',
-                        background: item.isCompleted ? '#F0FFF4' : 'var(--white)'
+                    <div key={item.id} className="card" style={{ 
+                        borderLeft: item.isCompleted ? '4px solid var(--color-world)' : '4px solid var(--color-tasks)',
+                        opacity: item.isCompleted ? 0.8 : 1
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                            <div className={`status-badge ${item.isCompleted ? 'badge-success' : 'badge-warning'}`}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+                            <span className={`badge ${item.isCompleted ? 'badge-emerald' : 'badge-amber'}`}>
                                 {item.isCompleted ? 'Выполнено' : 'Активно'}
-                            </div>
-                            <small style={{ color: 'var(--slate-400)' }}>От: {item.psychologist.fullName || 'Ваш психолог'}</small>
+                            </span>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                От: <span style={{ color: 'var(--text-accent)' }}>{item.psychologist.fullName || 'Ваш психолог'}</span>
+                            </span>
                         </div>
 
-                        <h3 style={{ marginBottom: '1rem' }}>{item.title}</h3>
-                        <p style={{ color: 'var(--slate-700)', lineHeight: 1.7, marginBottom: '2rem' }}>{item.description}</p>
+                        <h3 style={{ marginBottom: 'var(--space-sm)', textDecoration: item.isCompleted ? 'line-through' : 'none' }}>
+                            {item.title}
+                        </h3>
+                        <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 'var(--space-md)' }}>
+                            {item.description}
+                        </p>
 
                         {!item.isCompleted && selectedId !== item.id && (
-                            <button className="btn-primary" onClick={() => setSelectedId(item.id)}>Приступить к выполнению</button>
+                            <button className="btn-primary" style={{ background: 'linear-gradient(135deg, #6ee7b7, #34d399)' }} onClick={() => setSelectedId(item.id)}>
+                                Приступить к выполнению
+                            </button>
                         )}
 
                         {selectedId === item.id && (
-                            <div className="animate-up" style={{ marginTop: '2rem' }}>
+                            <div style={{ marginTop: 'var(--space-md)', background: 'var(--bg-surface-2)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)' }}>
+                                <label className="input-label">Ваш ответ</label>
                                 <textarea 
+                                    className="input-field"
                                     placeholder="Ваши мысли по заданию..." 
                                     value={answer} 
                                     onChange={e => setAnswer(e.target.value)}
-                                    style={{ height: '150px', marginBottom: '1.5rem', background: 'white' }}
+                                    style={{ height: '120px', marginBottom: 'var(--space-md)', resize: 'none' }}
                                 />
-                                <div style={{ display: 'flex', gap: '1rem' }}>
-                                    <button onClick={() => handleComplete(item.id)} className="btn-primary">Отправить специалисту</button>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button onClick={() => handleComplete(item.id)} className="btn-primary" style={{ background: 'linear-gradient(135deg, #6ee7b7, #34d399)' }}>Отправить специалисту</button>
                                     <button onClick={() => setSelectedId(null)} className="btn-secondary">Отмена</button>
                                 </div>
                             </div>
                         )}
 
                         {item.isCompleted && (
-                            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                                <div style={{ fontWeight: '700', fontSize: '0.8rem', color: 'var(--slate-400)', marginBottom: '0.5rem' }}>ВАШ ОТВЕТ:</div>
-                                <p style={{ margin: 0, color: 'var(--slate-600)', fontStyle: 'italic' }}>{item.clientAnswer}</p>
+                            <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border-subtle)' }}>
+                                <div className="input-label">Ваш ответ:</div>
+                                <p style={{ margin: 0, color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.9rem' }}>{item.clientAnswer}</p>
                             </div>
                         )}
                     </div>
                 ))}
+                
                 {assignments.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--slate-400)' }}>
-                        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎯</div>
-                        <p>У вас пока нет назначенных заданий.</p>
+                    <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)', border: '2px dashed var(--border-subtle)' }}>
+                        <div style={{ fontSize: '40px', marginBottom: 'var(--space-sm)' }}>🎯</div>
+                        <p style={{ color: 'var(--text-muted)' }}>У вас пока нет назначенных заданий.</p>
                     </div>
                 )}
             </div>

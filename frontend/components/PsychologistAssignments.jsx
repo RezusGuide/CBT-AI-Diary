@@ -36,27 +36,37 @@ export default function PsychologistAssignments() {
     };
 
     return (
-        <div className="animate-in">
-            <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+            <header style={{ marginBottom: 'var(--space-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '2rem' }}>Программа терапии</h1>
-                    <p style={{ color: 'var(--slate-500)' }}>Назначение и контроль выполнения заданий</p>
+                    <h1>Программа терапии</h1>
+                    <p style={{ color: 'var(--text-muted)' }}>Назначение и контроль выполнения заданий</p>
                 </div>
                 <button className="btn-primary" onClick={() => setIsCreating(true)}>+ Назначить задание</button>
             </header>
 
             {isCreating && (
-                <div className="glass-card animate-up" style={{ marginBottom: '3rem', background: 'var(--p-100)', border: 'none' }}>
+                <div className="card" style={{ marginBottom: 'var(--space-xl)', background: 'var(--bg-surface-2)' }}>
+                    <h3 className="card-header">Новое задание</h3>
                     <form onSubmit={handleCreate}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                            <input placeholder="Название (напр. Техника 5-4-3-2-1)" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
-                            <select value={formData.clientId} onChange={e => setFormData({...formData, clientId: e.target.value})} required>
-                                <option value="">Выберите получателя...</option>
-                                {clients.map(c => <option key={c.id} value={c.id}>{c.fullName || c.username}</option>)}
-                            </select>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+                            <div>
+                                <label className="input-label">Название</label>
+                                <input className="input-field" placeholder="Напр. Техника 5-4-3-2-1" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                            </div>
+                            <div>
+                                <label className="input-label">Получатель</label>
+                                <select className="input-field" value={formData.clientId} onChange={e => setFormData({...formData, clientId: e.target.value})} required style={{ cursor: 'pointer' }}>
+                                    <option value="">Выберите клиента...</option>
+                                    {clients.map(c => <option key={c.id} value={c.id}>{c.fullName || c.username}</option>)}
+                                </select>
+                            </div>
                         </div>
-                        <textarea placeholder="Опишите инструкции для клиента..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ height: '120px', marginBottom: '1.5rem', background: 'white' }} required />
-                        <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ marginBottom: 'var(--space-lg)' }}>
+                            <label className="input-label">Инструкции</label>
+                            <textarea className="input-field" placeholder="Опишите инструкции для клиента..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ height: '120px', resize: 'none' }} required />
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px' }}>
                             <button type="submit" className="btn-primary">Отправить клиенту</button>
                             <button type="button" className="btn-secondary" onClick={() => setIsCreating(false)}>Отмена</button>
                         </div>
@@ -64,26 +74,33 @@ export default function PsychologistAssignments() {
                 </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                 {assignments.map(item => (
-                    <div key={item.id} className="glass-card" style={{ padding: '2rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <div className={`status-badge ${item.isCompleted ? 'badge-success' : 'badge-warning'}`}>
+                    <div key={item.id} className="card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+                            <span className={`badge ${item.isCompleted ? 'badge-emerald' : 'badge-amber'}`}>
                                 {item.isCompleted ? 'Выполнено' : 'В процессе'}
-                            </div>
-                            <small style={{ color: 'var(--slate-400)' }}>{new Date(item.createdAt).toLocaleDateString()}</small>
+                            </span>
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(item.createdAt).toLocaleDateString()}</span>
                         </div>
-                        <h3 style={{ margin: '0 0 10px 0' }}>{item.title}</h3>
-                        <p style={{ color: 'var(--slate-600)', margin: '0 0 20px 0', fontSize: '0.95rem' }}>{item.description}</p>
+                        <h3 style={{ marginBottom: 'var(--space-sm)' }}>{item.title}</h3>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-md)', fontSize: '14px', lineHeight: 1.6 }}>{item.description}</p>
                         
                         {item.clientAnswer && (
-                            <div className="ai-box" style={{ background: 'var(--p-100)', border: 'none', margin: 0 }}>
-                                <div style={{ fontWeight: '800', color: 'var(--p-600)', marginBottom: '0.5rem', fontSize: '0.85rem' }}>ОТВЕТ КЛИЕНТА:</div>
-                                <p style={{ margin: 0, color: 'var(--slate-800)', fontSize: '0.95rem' }}>{item.clientAnswer}</p>
+                            <div style={{ background: 'var(--bg-surface-2)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--color-tasks)' }}>
+                                <div className="input-label" style={{ color: 'var(--color-tasks)', marginBottom: '8px' }}>ОТВЕТ КЛИЕНТА:</div>
+                                <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '14px', fontStyle: 'italic' }}>{item.clientAnswer}</p>
                             </div>
                         )}
                     </div>
                 ))}
+                
+                {assignments.length === 0 && !isCreating && (
+                    <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)', border: '1px dashed var(--border-subtle)' }}>
+                        <div style={{ fontSize: '40px', marginBottom: 'var(--space-sm)' }}>🎯</div>
+                        <p style={{ color: 'var(--text-muted)' }}>Назначенных заданий пока нет.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

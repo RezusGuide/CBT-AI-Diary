@@ -15,43 +15,56 @@ export default function PsychologistHome() {
     }, [user.id]);
 
     return (
-        <div className="animate-in">
-            <header style={{ marginBottom: '3rem' }}>
-                <h1 style={{ fontSize: '2.4rem', fontWeight: '800' }}>Добро пожаловать, {user.fullName || 'Доктор'}!</h1>
-                <p style={{ color: 'var(--slate-500)', fontSize: '1.1rem' }}>Ваша практика сегодня: у вас {clients.length} активных сессий в обзоре.</p>
+        <div>
+            <header style={{ marginBottom: 'var(--space-xl)' }}>
+                <h1>Добро пожаловать, {user.fullName || 'Доктор'}!</h1>
+                <p style={{ color: 'var(--text-muted)' }}>Ваша практика сегодня: у вас {clients.length} активных сессий в обзоре.</p>
             </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 'var(--space-lg)' }}>
                 {/* CLIENT OVERVIEW */}
                 <section>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h2 style={{ fontSize: '1.4rem' }}>Недавние клиенты</h2>
-                        <Link to="/psychologist/clients" style={{ color: 'var(--primary)', fontWeight: '700', textDecoration: 'none' }}>Все клиенты →</Link>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+                        <h2>Недавние клиенты</h2>
+                        <Link to="/psychologist/clients" style={{ color: 'var(--accent-primary)', fontWeight: '600', fontSize: '14px' }}>Все клиенты →</Link>
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                         {clients.map(client => (
-                            <div key={client.id} className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                                <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                            <div key={client.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                                <div style={{ 
+                                    width: '40px', 
+                                    height: '40px', 
+                                    borderRadius: 'var(--radius-md)', 
+                                    background: 'var(--bg-surface-2)', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    fontSize: '18px' 
+                                }}>
                                     👤
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <h4 style={{ margin: 0 }}>{client.fullName || client.username}</h4>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--slate-500)', margin: 0 }}>Последняя активность: Вчера</p>
+                                    <h4 style={{ margin: 0, fontSize: '15px' }}>{client.fullName || client.username}</h4>
+                                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>Последняя активность: Вчера</p>
                                 </div>
-                                <Link to={`/psychologist/client/${client.id}`} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+                                <Link to={`/psychologist/client/${client.id}`} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '12px' }}>
                                     Открыть карту
                                 </Link>
                             </div>
                         ))}
-                        {clients.length === 0 && <p style={{ color: 'var(--slate-400)' }}>У вас пока нет прикрепленных клиентов.</p>}
+                        {clients.length === 0 && (
+                            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-xl)', border: '1px dashed var(--border-subtle)' }}>
+                                <p style={{ color: 'var(--text-muted)', margin: 0 }}>У вас пока нет прикрепленных клиентов.</p>
+                            </div>
+                        )}
                     </div>
                 </section>
 
                 {/* QUICK CALENDAR / TASKS */}
                 <section>
-                    <h2 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Расписание сессий</h2>
-                    <div className="glass-card" style={{ padding: '1.5rem' }}>
+                    <h2 style={{ marginBottom: 'var(--space-md)' }}>Расписание</h2>
+                    <div className="card" style={{ padding: 'var(--space-md)' }}>
                         <PsychologistCalendar />
                     </div>
                 </section>

@@ -23,10 +23,9 @@ public class DiaryController {
         return diaryRepository.findAllByUser_IdOrderByCreatedAtDesc(userId);
     }
 
-    @GetMapping("/all")
-    public List<DiaryEntry> getHistory(@RequestParam Long userId) {
-        return diaryRepository.findAllByUser_IdOrderByCreatedAtDesc(userId);
-
+    @GetMapping("/history")
+    public ResponseEntity<List<DiaryEntry>> getHistory(@RequestParam Long userId) {
+        return ResponseEntity.ok(diaryRepository.findAllByUser_IdOrderByCreatedAtDesc(userId));
     }
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<DiaryEntry>> getUserEntries(@PathVariable Long userId) {

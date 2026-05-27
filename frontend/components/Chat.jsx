@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import toast from 'react-hot-toast';
 
 const Chat = () => {
     const [chats, setChats] = useState([]);
@@ -11,9 +10,23 @@ const Chat = () => {
 
     useEffect(() => {
         fetchChats();
-        const interval = setInterval(fetchMessages, 3000);
-        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        if (selectedChat) {
+            fetchMessages();
+            const interval = setInterval(fetchMessages, 3000);
+            return () => clearInterval(interval);
+        }
     }, [selectedChat]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
     const fetchChats = () => {
         fetch(`/api/chat/user/${user.id}`).then(res => res.json()).then(data => setChats(data));
@@ -40,29 +53,53 @@ const Chat = () => {
     };
 
     return (
-        <div className="app-layout" style={{ height: 'calc(100vh - 6rem)', marginLeft: 0 }}>
-            <div className="chat-container animate-in" style={{ width: '100%', display: 'flex' }}>
+        <div className="chat-container">
+            <div style={{ display: 'flex', height: '100%' }}>
                 {/* CHAT SIDEBAR */}
-                <div className="chat-sidebar" style={{ width: '320px', borderRight: '1px solid var(--slate-200)', background: 'var(--white)' }}>
-                    <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--slate-200)' }}>
-                        <h2 style={{ fontSize: '1.2rem', margin: 0 }}>Сообщения</h2>
+                <div style={{ width: '260px', borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
+                    <div style={{ padding: '20px', borderBottom: '1px solid var(--border-subtle)' }}>
+                        <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Чаты</h2>
                     </div>
-                    <div style={{ overflowY: 'auto', height: 'calc(100% - 70px)' }}>
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
                         {chats.map(chat => {
                             const otherUser = chat.client.id === user.id ? chat.psychologist : chat.client;
+                            const isSelected = selectedChat?.id === chat.id;
                             return (
                                 <div 
                                     key={chat.id} 
                                     onClick={() => setSelectedChat(chat)}
                                     style={{ 
-                                        padding: '1.25rem', cursor: 'pointer', 
-                                        background: selectedChat?.id === chat.id ? 'var(--p-100)' : 'transparent',
-                                        borderLeft: selectedChat?.id === chat.id ? '4px solid var(--p-600)' : '4px solid transparent',
-                                        transition: '0.2s'
+                                        padding: '14px 20px', 
+                                        cursor: 'pointer', 
+                                        background: isSelected ? 'var(--bg-surface-2)' : 'transparent',
+                                        borderLeft: isSelected ? '3px solid var(--accent-primary)' : '3px solid transparent',
+                                        transition: 'var(--transition-fast)'
                                     }}
                                 >
-                                    <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>{otherUser.fullName || otherUser.username}</div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--slate-400)', marginTop: '4px' }}>Нажмите, чтобы открыть чат</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div style={{ 
+                                            width: '32px', 
+                                            height: '32px', 
+                                            borderRadius: 'var(--radius-full)', 
+                                            background: otherUser.role === 'PSYCHOLOGIST' ? 'var(--accent-primary)' : 'var(--accent-orange)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: '#fff',
+                                            fontSize: '13px',
+                                            fontWeight: '700'
+                                        }}>
+                                            {otherUser.username.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div style={{ overflow: 'hidden' }}>
+                                            <div style={{ fontWeight: '600', fontSize: '13px', color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {otherUser.fullName || otherUser.username}
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                                {otherUser.role === 'PSYCHOLOGIST' ? 'Психолог' : 'Клиент'}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             );
                         })}
@@ -70,47 +107,71 @@ const Chat = () => {
                 </div>
 
                 {/* MESSAGES AREA */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-lavender)' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
                     {selectedChat ? (
                         <>
-                            <div style={{ padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--slate-200)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--p-600)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                            <div className="chat-header">
+                                <div style={{ 
+                                    width: '40px', 
+                                    height: '40px', 
+                                    borderRadius: 'var(--radius-md)', 
+                                    background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                                    color: 'white', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    fontWeight: 'bold',
+                                    fontSize: '18px'
+                                }}>
                                     {(selectedChat.client.id === user.id ? selectedChat.psychologist : selectedChat.client).username.charAt(0).toUpperCase()}
                                 </div>
-                                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
-                                    {selectedChat.client.id === user.id ? selectedChat.psychologist.fullName : selectedChat.client.fullName}
-                                </h3>
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: '15px' }}>
+                                        {selectedChat.client.id === user.id ? selectedChat.psychologist.fullName : selectedChat.client.fullName}
+                                    </h3>
+                                    <div style={{ fontSize: '11px', color: 'var(--color-world)' }}>● В сети</div>
+                                </div>
                             </div>
 
-                            <div style={{ flex: 1, overflowY: 'auto', padding: '2rem', display: 'flex', flexDirection: 'column' }}>
-                                {messages.map(msg => (
-                                    <div key={msg.id} className={`message-bubble ${msg.sender.id === user.id ? 'msg-mine' : 'msg-theirs'}`}>
-                                        {msg.content}
-                                        <div style={{ fontSize: '0.65rem', marginTop: '4px', opacity: 0.7, textAlign: 'right' }}>
-                                            {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+                                {messages.map(msg => {
+                                    const isMine = msg.sender.id === user.id;
+                                    return (
+                                        <div 
+                                            key={msg.id} 
+                                            className={`message ${isMine ? 'message-user' : 'message-ai'}`}
+                                            style={{ alignSelf: isMine ? 'flex-end' : 'flex-start' }}
+                                        >
+                                            {msg.content}
+                                            <div className="message-time">
+                                                {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 <div ref={messagesEndRef} />
                             </div>
 
-                            <div style={{ padding: '1.5rem 2rem', background: 'var(--white)', borderTop: '1px solid var(--slate-200)' }}>
-                                <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '1rem' }}>
+                            <div className="chat-input-area">
+                                <form onSubmit={handleSendMessage} style={{ display: 'flex', width: '100%', gap: '10px' }}>
                                     <input 
+                                        className="chat-input"
                                         placeholder="Напишите сообщение..." 
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
-                                        style={{ marginBottom: 0 }}
                                     />
-                                    <button type="submit" className="btn-primary">Отправить</button>
+                                    <button type="submit" className="chat-send-btn">
+                                        <span style={{ transform: 'rotate(45deg)', display: 'inline-block', marginBottom: '2px', marginRight: '2px' }}>✈️</span>
+                                    </button>
                                 </form>
                             </div>
                         </>
                     ) : (
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--slate-400)' }}>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
                             <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>💬</div>
-                                <p>Выберите чат для начала общения</p>
+                                <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.2 }}>💬</div>
+                                <h2 style={{ color: 'var(--text-muted)', marginBottom: '8px' }}>Ваши сообщения</h2>
+                                <p>Выберите чат, чтобы начать общение</p>
                             </div>
                         </div>
                     )}

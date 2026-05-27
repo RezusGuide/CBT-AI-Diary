@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import './App.css'; // Убедись, что CSS подключен
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -18,7 +17,6 @@ const Login = () => {
         e.preventDefault();
 
         try {
-            // ВАЖНО: Убедись, что адрес правильный (обычно /auth/login или /api/auth/login)
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
@@ -28,17 +26,10 @@ const Login = () => {
             });
 
             if (response.ok) {
-                // 1. Получаем данные пользователя от сервера (там будет id, fullName, role и т.д.)
                 const data = await response.json();
-
-                console.log("Успешный вход! Данные сервера:", data); // Для проверки в консоли
-
-                // 2. !!! САМОЕ ВАЖНОЕ: СОХРАНЯЕМ ИХ В БРАУЗЕРЕ !!!
                 localStorage.setItem('user', JSON.stringify(data));
-
                 toast.success(`Добро пожаловать, ${data.fullName || data.username}!`, { duration: 2500 });
-
-                // 3. Перенаправляем в зависимости от роли
+                
                 if (data.role === 'PSYCHOLOGIST') {
                     navigate('/psychologist');
                 } else {
@@ -54,32 +45,49 @@ const Login = () => {
     };
 
     return (
-        <div className="auth-wrapper">
-            <div className="auth-container">
-                <h2>Вход в систему</h2>
+        <div className="auth-page">
+            <div className="auth-card">
+                <div className="auth-logo" style={{ fontSize: '3rem' }}>🌱</div>
+                <h2 className="auth-title">Вход в систему</h2>
+                <p className="auth-subtitle">С возвращением в ваш уголок спокойствия</p>
+                
                 <form onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        name="username"
-                        placeholder="Логин (username)"
-                        value={formData.username}
-                        onChange={handleChange}
-                        required
-                    />
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Пароль"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                    />
-                    <button type="submit" className="btn-primary">Войти</button>
+                    <div style={{ marginBottom: 'var(--space-md)' }}>
+                        <label className="input-label">Логин</label>
+                        <input
+                            className="input-field"
+                            type="text"
+                            name="username"
+                            placeholder="Ваш username"
+                            value={formData.username}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                    <div style={{ marginBottom: 'var(--space-lg)' }}>
+                        <label className="input-label">Пароль</label>
+                        <input
+                            className="input-field"
+                            type="password"
+                            name="password"
+                            placeholder="Ваш пароль"
+                            value={formData.password}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>Войти</button>
                 </form>
 
-                <div className="auth-links">
-                    Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+                <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)', fontSize: '14px' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Нет аккаунта? </span>
+                    <Link to="/register" style={{ color: 'var(--accent-primary)', fontWeight: '600' }}>Зарегистрироваться</Link>
                 </div>
+            </div>
+            
+            {/* Ambient background elements handled by .auth-page in CSS if needed, 
+                but we can add them here as well for extra effect as per Step 3 */}
+            <div className="app-layout" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}>
             </div>
         </div>
     );

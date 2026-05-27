@@ -1,0 +1,31 @@
+# MISSION: PRE-DEPLOYMENT COMPREHENSIVE AUDIT & BUG FIX
+You are an expert QA Engineer and Full-Stack Developer. I am preparing to deploy this project (CBT-AI-Diary) to production (Vercel for the frontend, cloud hosting for the backend).
+
+Before I deploy, you must perform a deep, comprehensive scan of the entire codebase to detect, report, and fix bugs, anomalies, memory leaks, and broken integrations.
+
+## SCOPE OF WORK
+You have full access to the project directory. You must analyze both the React/Vite frontend and the Java Spring Boot backend.
+
+## PHASE 1: FRONTEND (React/Vite) SCAN
+1. Scan all `.jsx` and `.js` files in `frontend/src/`.
+2. Find and fix any unresolved imports, undefined variables, or dead code (e.g., leftover imports from deleted files).
+3. Check for React specific anomalies: Missing `key` props in maps, infinite loops in `useEffect`, or improper state mutations.
+4. **CRITICAL RULE:** Do NOT alter the CSS classes, design tokens, or structure of the components. A visual redesign was just completed. Only fix logical JavaScript/React errors.
+
+## PHASE 2: BACKEND (Java Spring Boot) SCAN
+1. Scan the `src/main/java/` and `src/main/resources/` directories.
+2. Check for null pointer vulnerabilities, unhandled exceptions, or improper database transaction management.
+3. Verify that all REST controllers return appropriate HTTP status codes (400, 401, 404, 500) and clean JSON responses.
+4. Ensure `application.properties` is clean and does not contain hardcoded secrets that would break a production deployment.
+
+## PHASE 3: INTEGRATION & MERGE CONFLICT CHECK
+1. Cross-reference the frontend API calls (fetch/axios) with the backend Spring Boot Controllers. Ensure all endpoints, HTTP methods (GET/POST/PUT/DELETE), and payload structures match perfectly.
+2. Scan the codebase for any leftover Git merge conflict markers (e.g., `<<<<<<< HEAD`, `=======`, `>>>>>>>`). Resolve them logically if found.
+
+## PHASE 4: EXECUTION & FIXING
+1. Identify all critical errors and silently fix them.
+2. If an anomaly requires changing core business logic or rewriting a complex backend service, STOP and ask me for confirmation before modifying the file.
+3. Ensure all environment variables needed for production (e.g., `VITE_API_BASE_URL`, database credentials) are documented in `.env.example` files.
+
+## DELIVERABLE
+Provide a concise "Audit Report" listing exactly what bugs were found, what files were changed to fix them, and confirmation that the codebase is structurally sound for deployment.

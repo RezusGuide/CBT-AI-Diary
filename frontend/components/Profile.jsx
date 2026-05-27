@@ -8,7 +8,6 @@ const Profile = () => {
         fullName: '', phone: '', aboutMe: '', email: ''
     });
 
-    // Ссылка на скрытый input для файла
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -26,7 +25,6 @@ const Profile = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // ФУНКЦИЯ ЗАГРУЗКИ ФОТО
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -37,21 +35,15 @@ const Profile = () => {
         const toastId = toast.loading("Загрузка фото...");
 
         try {
-            // Отправляем файл на сервер
             const res = await fetch(`/api/users/${user.id}/avatar`, {
                 method: 'POST',
-                body: formData // Заголовки Content-Type браузер поставит сам
+                body: formData
             });
 
             if (res.ok) {
                 const updatedUser = await res.json();
-
-                // Обновляем локальное хранилище и состояние
-                // ВАЖНО: Если сервер вернул относительный путь (/uploads/...),
-                // браузер поймет его корректно относительно текущего домена
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 setUser(updatedUser);
-
                 toast.success("Фото обновлено!", { id: toastId });
             } else {
                 toast.error("Ошибка загрузки", { id: toastId });
@@ -87,96 +79,80 @@ const Profile = () => {
             });
             setIsEditing(false);
             toast.success("Saved", { id: toastId });
-            return;
         } catch (error) {
             console.error(error);
             toast.error("Profile was not saved", { id: toastId });
-            return;
         }
-
-        const updatedUser = { ...user, ...formData };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        setUser(updatedUser);
-        setIsEditing(false);
-        toast.success("Данные сохранены!");
-        // Здесь добавь fetch на обновление текстовых данных, если нужно
     };
 
     return (
-        <div className="profile-card-container">
-            <div className="profile-banner"></div>
-
-            {/* АВАТАРКА В ПРОФИЛЕ */}
-            <div className="profile-avatar-wrapper"
-                 onClick={() => fileInputRef.current.click()}
-                 style={{
-                     background: '#e67e22',
-                     cursor: 'pointer',
-                     overflow: 'hidden', // Это ОБЯЗАТЕЛЬНО, чтобы фото не вылезало за границы круга
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center'
-                 }}>
-
-                {user.photoUrl ? (
-                    <img
-                        src={`http://localhost:8080${user.photoUrl}`}
-                        alt="Avatar"
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover', // Сохраняет пропорции, обрезая лишнее по краям
-                            display: 'block'
-                        }}
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.style.display = 'none';
-                        }}
-                    />
+        <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-xl)' }}>
+                <div>
+                    <h1>Личный кабинет</h1>
+                    <p style={{ color: 'var(--text-muted)' }}>Управляйте вашими данными и настройками профиля</p>
+                </div>
+                {!isEditing ? (
+                    <button onClick={() => setIsEditing(true)} className="btn-primary">✏️ Изменить</button>
                 ) : (
-                    <div style={{fontSize: '4rem', color: 'white', fontWeight: 'bold'}}>
-                        {user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'}
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button onClick={() => setIsEditing(false)} className="btn-secondary">Отмена</button>
+                        <button onClick={handleSave} className="btn-primary">Сохранить</button>
                     </div>
                 )}
-
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{display: 'none'}} accept="image/*" />
             </div>
 
-            <div className="profile-header-info">
-                <div style={{flex: 1}}>
-                    {isEditing ? (
-                        <input className="edit-input" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Ваше Имя" />
-                    ) : (
-                        <h1 className="profile-name-large">{user.fullName || user.username || "Гость"}</h1>
-                    )}
-                    <span className="profile-role-badge">{user.role === 'PSYCHOLOGIST' ? 'Психолог' : 'Пользователь'}</span>
-                </div>
-                <div>
-                    {!isEditing ? (
-                        <button onClick={() => setIsEditing(true)} className="btn-primary">✏️ Изменить</button>
-                    ) : (
-                        <div style={{display:'flex', gap:'10px'}}>
-                            <button onClick={() => setIsEditing(false)} style={{background:'#ddd', padding:'10px 20px', borderRadius:'8px', border:'none'}}>Отмена</button>
-                            <button onClick={handleSave} className="btn-primary">Сохранить</button>
+            <div className="card" style={{ padding: 0 }}>
+                <div className="profile-banner"></div>
+                <div style={{ padding: '0 var(--space-lg) var(--space-lg)' }}>
+                    <div className="profile-avatar-large" onClick={() => fileInputRef.current.click()} style={{ cursor: 'pointer' }}>
+                        {user.photoUrl ? (
+                            <img src={`${import.meta.env.VITE_API_BASE_URL || ''}${user.photoUrl}`} alt="Avatar" />
+                        ) : (
+                            <span>{user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'}</span>
+                        )}
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/*" />
+                    </div>
+
+                    <div style={{ marginTop: 'var(--space-md)' }}>
+                        {isEditing ? (
+                            <input className="input-field" name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Ваше Имя" style={{ fontSize: '20px', fontWeight: '700', marginBottom: 'var(--space-sm)' }} />
+                        ) : (
+                            <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: 'var(--space-xs)' }}>{user.fullName || user.username || "Гость"}</h2>
+                        )}
+                        <span className="badge badge-violet">{user.role === 'PSYCHOLOGIST' ? 'Психолог' : 'Пользователь'}</span>
+                    </div>
+
+                    <div className="profile-info-grid">
+                        <div className="info-field">
+                            <label className="input-label">Логин</label>
+                            <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>{user.username}</div>
+                        </div>
+                        <div className="info-field">
+                            <label className="input-label">Email</label>
+                            {isEditing ? (
+                                <input className="input-field" name="email" value={formData.email} onChange={handleChange} />
+                            ) : (
+                                <div style={{ fontSize: '14px', fontWeight: '500', color: user.email ? 'var(--text-primary)' : 'var(--text-muted)' }}>{user.email || "Не указан"}</div>
+                            )}
+                        </div>
+                        <div className="info-field">
+                            <label className="input-label">Телефон</label>
+                            {isEditing ? (
+                                <input className="input-field" name="phone" value={formData.phone} onChange={handleChange} />
+                            ) : (
+                                <div style={{ fontSize: '14px', fontWeight: '500', color: user.phone ? 'var(--text-primary)' : 'var(--text-muted)' }}>{user.phone || "Не указан"}</div>
+                            )}
+                        </div>
+                    </div>
+                    
+                    {isEditing && (
+                        <div style={{ marginTop: 'var(--space-md)' }}>
+                            <label className="input-label">О себе</label>
+                            <textarea className="input-field" name="aboutMe" value={formData.aboutMe} onChange={handleChange} rows="4" style={{ resize: 'none' }} />
                         </div>
                     )}
                 </div>
-            </div>
-
-            <div className="profile-details-grid">
-                <div className="detail-box">
-                    <div className="detail-label">Логин</div>
-                    <div className="detail-value">{user.username}</div>
-                </div>
-                <div className="detail-box">
-                    <div className="detail-label">Email</div>
-                    {isEditing ? <input className="edit-input" name="email" value={formData.email} onChange={handleChange} /> : <div className="detail-value">{user.email || "Не указан"}</div>}
-                </div>
-                <div className="detail-box">
-                    <div className="detail-label">Телефон</div>
-                    {isEditing ? <input className="edit-input" name="phone" value={formData.phone} onChange={handleChange} /> : <div className="detail-value">{user.phone || "Не указан"}</div>}
-                </div>
-
             </div>
         </div>
     );
