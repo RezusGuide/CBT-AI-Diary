@@ -1,89 +1,81 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import './App.css';
+import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export default function Register() {
-    const [formData, setFormData] = useState({
-        username: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        role: 'CLIENT'
-    });
+    const [formData, setFormData] = useState({ username: '', password: '', role: 'CLIENT' });
     const navigate = useNavigate();
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
-        if (formData.password !== formData.confirmPassword) {
-            alert("Пароли не совпадают!");
-            return;
-        }
-
         try {
-            const response = await fetch('/api/auth/register', {
+            const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: formData.username,
-                    email: formData.email,
-                    password: formData.password,
-                    role: formData.role
-                })
+                body: JSON.stringify(formData)
             });
 
-            if (response.ok) {
-                alert("Регистрация успешна! Теперь войдите.");
+            if (res.ok) {
+                toast.success("Регистрация успешна! Теперь вы можете войти.");
                 navigate('/login');
             } else {
-                const errorData = await response.json();
-                alert("Ошибка: " + (errorData.error || "Ошибка сервера"));
+                toast.error("Ошибка при регистрации");
             }
-        } catch (error) {
-            console.error(error);
-            alert("Сервер недоступен");
-        }
+        } catch (error) { toast.error("Ошибка соединения"); }
     };
 
     return (
-        <div className="auth-wrapper">
-            <div className="auth-container">
-                <h2>Регистрация</h2>
-                <form onSubmit={handleSubmit}>
+        <div className="app-layout" style={{ justifyContent: 'center', alignItems: 'center', marginLeft: 0 }}>
+            <div className="diary-container animate-up" style={{ maxWidth: '480px', width: '100%', padding: '3.5rem 2.5rem' }}>
+                <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌱</div>
+                    <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>Присоединиться</h2>
+                    <p style={{ color: 'var(--slate-500)', marginTop: '0.5rem' }}>Начните свой путь к осознанности</p>
+                </div>
 
-                    <div style={{display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '10px'}}>
-                        <label style={{cursor: 'pointer'}}>
-                            <input
-                                type="radio"
-                                name="role"
-                                value="CLIENT"
-                                checked={formData.role === 'CLIENT'}
-                                onChange={handleChange}
-                            /> Я Клиент
-                        </label>
-                        <label style={{cursor: 'pointer'}}>
-                            <input
-                                type="radio"
-                                name="role"
-                                value="PSYCHOLOGIST"
-                                checked={formData.role === 'PSYCHOLOGIST'}
-                                onChange={handleChange}
-                            /> Я Психолог
-                        </label>
+                <form onSubmit={handleRegister}>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--slate-600)' }}>РОЛЬ В СИСТЕМЕ</label>
+                        <select
+                            value={formData.role}
+                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                            style={{ 
+                                cursor: 'pointer', 
+                                border: '2px solid var(--p-100)',
+                                background: 'var(--p-100)',
+                                color: 'var(--slate-800)',
+                                fontWeight: '600'
+                            }}
+                        >
+                            <option value="CLIENT">Я — Клиент</option>
+                            <option value="PSYCHOLOGIST">Я — Специалист (Психолог)</option>
+                        </select>
                     </div>
-
-                    <input type="text" name="username" placeholder="Имя пользователя" onChange={handleChange} required />
-                    <input type="email" name="email" placeholder="Email" onChange={handleChange} required />
-                    <input type="password" name="password" placeholder="Пароль" onChange={handleChange} required />
-                    <input type="password" name="confirmPassword" placeholder="Повторите пароль" onChange={handleChange} required />
-
-                    <button type="submit" className="btn-primary">Создать аккаунт</button>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--slate-600)' }}>ЛОГИН</label>
+                        <input
+                            type="text"
+                            placeholder="Придумайте username"
+                            value={formData.username}
+                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div style={{ marginBottom: '2rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--slate-600)' }}>ПАРОЛЬ</label>
+                        <input
+                            type="password"
+                            placeholder="Минимум 6 символов"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ width: '100%', padding: '1rem' }}>Создать мой кабинет</button>
                 </form>
-                <div className="auth-links">
-                    Уже есть аккаунт? <Link to="/login">Войти</Link>
+
+                <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--slate-500)' }}>
+                    Уже есть аккаунт? <Link to="/login" style={{ color: 'var(--p-600)', fontWeight: '700', textDecoration: 'none' }}>Войти</Link>
                 </div>
             </div>
         </div>

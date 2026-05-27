@@ -5,7 +5,6 @@ import { Toaster } from 'react-hot-toast';
 import Welcome from './components/Welcome';
 import Login from './components/Login';
 import Register from './components/Register';
-import MoodCheck from './components/MoodCheck';
 import ClientHome from './components/ClientHome';
 import ClientLayout from './components/ClientLayout';
 import Profile from './components/Profile';
@@ -22,7 +21,6 @@ import PsychologistProfile from './components/PsychologistProfile';
 import Chat from './components/Chat';
 import InnerWorld from './components/InnerWorld';
 import './components/App.css';
-import {DEFAULT_THEME, EMOTION_THEMES} from "./src/themes";
 
 // Защита маршрутов по ролям
 const RoleGuard = ({ children, allowedRole }) => {
@@ -33,29 +31,6 @@ const RoleGuard = ({ children, allowedRole }) => {
 };
 
 function App() {
-    React.useEffect(() => {
-        try {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const keyPart = user.id ? user.id : 'guest';
-            // Ищем сохраненное настроение за сегодня
-            const dateKey = `mood_${keyPart}_${new Date().toDateString()}`;
-            const savedMoodId = localStorage.getItem(dateKey);
-
-            let theme = DEFAULT_THEME;
-            if (savedMoodId && EMOTION_THEMES[savedMoodId]) {
-                theme = EMOTION_THEMES[savedMoodId];
-            }
-
-            // Устанавливаем глобальные CSS-переменные
-            const root = document.documentElement;
-            root.style.setProperty('--theme-primary', theme.colors.primary);
-            root.style.setProperty('--theme-secondary', theme.colors.secondary);
-            root.style.setProperty('--theme-animation', theme.animation);
-
-        } catch (e) {
-            console.error("Ошибка темы:", e);
-        }
-    }, []);
     return (
         <Router>
             <Toaster position="top-center" />
@@ -64,7 +39,6 @@ function App() {
                 <Route path="/" element={<Welcome />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/mood-check" element={<MoodCheck />} />
 
                 {/* КЛИЕНТ */}
                 <Route path="/client-home" element={<RoleGuard allowedRole="CLIENT"><ClientLayout><ClientHome /></ClientLayout></RoleGuard>} />

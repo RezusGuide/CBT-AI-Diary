@@ -1,25 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { EMOTION_THEMES } from '../src/themes';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
+const MOOD_OPTIONS = [
+    { key: 'happy', label: 'Радостно', emoji: '🌟' },
+    { key: 'joy', label: 'Энергично', emoji: '⚡' },
+    { key: 'calm', label: 'Спокойно', emoji: '🧘' },
+    { key: 'sad', label: 'Грустно', emoji: '☁️' },
+    { key: 'annoyed', label: 'Раздражение', emoji: '🔥' }
+];
+
 export default function ClientHome() {
     const navigate = useNavigate();
-    const [user, setUser] = useState(() => {
-        try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch (e) { return {}; }
-    });
-
-    const [psychologists, setPsychologists] = useState([]);
+    const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
     const [moodSelected, setMoodSelected] = useState(false);
-    const [loading, setLoading] = useState(true);
-
-    // Замени этот кусок в ClientHome.jsx
 
     useEffect(() => {
-        if (user.id) {
-            checkTodayMood();
-        }
-        loadPsychologists();
+        if (user.id) checkTodayMood();
     }, [user.id]);
 
     const checkTodayMood = async () => {
@@ -27,98 +24,36 @@ export default function ClientHome() {
             const res = await fetch(`/api/mood/today/${user.id}`);
             if (res.ok) {
                 const data = await res.json();
-                if (data.mood && data.mood !== "") {
-                    // Если сервер вернул настроение за сегодня - скрываем меню выбора
-                    setMoodSelected(true);
-
-                    // Устанавливаем глобальную тему (как мы делали в App.jsx)
-                    localStorage.setItem(`mood_${user.id}_${new Date().toDateString()}`, data.mood);
-                }
+                if (data.mood && data.mood !== "") setMoodSelected(true);
             }
         } catch (e) { console.error(e); }
     };
 
     const handleMoodClick = async (moodKey) => {
-        // Отправляем настроение НА СЕРВЕР
         try {
             await fetch(`/api/mood/${user.id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mood: moodKey })
             });
-
-            // Сохраняем локально для мгновенной смены темы
             localStorage.setItem(`mood_${user.id}_${new Date().toDateString()}`, moodKey);
             setMoodSelected(true);
-            toast.success("Настроение сохранено");
-            setTimeout(() => window.location.reload(), 500);
-
-        } catch (e) {
-            toast.error("Ошибка сети");
-        }
-    };
-
-    const loadPsychologists = async () => {
-        try {
-            const res = await fetch('/api/users/psychologists');
-            if (res.ok) {
-                const data = await res.json();
-                setPsychologists(data);
-            } else {
-                console.log("Не удалось загрузить список психологов");
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-
-    const handleStartChat = (psych) => {
-        localStorage.setItem('chatTarget', JSON.stringify(psych));
-        navigate('/chat');
-        toast.success(`Чат с ${psych.fullName || psych.username} создан!`);
-    };
-
-    const resetMood = () => {
-        const userId = user.id || 'guest';
-        const dateKey = `mood_${userId}_${new Date().toDateString()}`;
-        localStorage.removeItem(dateKey);
-        setMoodSelected(false);
-    };
-
-    const handleSelectPsychologist = async (psychId) => {
-        try {
-            const res = await fetch(`/api/users/${user.id}/select-psychologist/${psychId}`, {
-                method: 'POST'
-            });
-
-            if (res.ok) {
-                const updatedUser = await res.json();
-                localStorage.setItem('user', JSON.stringify(updatedUser));
-                setUser(updatedUser);
-                toast.success("Специалист успешно выбран!");
-            } else {
-                toast.error("Не удалось выбрать специалиста");
-            }
-        } catch (e) {
-            console.error(e);
-            toast.error("Ошибка соединения с сервером");
-        }
+            toast.success("Настроение сохранено ✨");
+            window.location.reload();
+        } catch (e) { toast.error("Ошибка сети"); }
     };
 
     if (!moodSelected) {
         return (
-            <div className="diary-container" style={{textAlign: 'center', marginTop: '50px'}}>
-                <h1>Привет, {user.fullName || user.username || 'Друг'}! 👋</h1>
-                <p style={{marginBottom: '30px', color: '#666'}}>Какое настроение преобладает сегодня?</p>
-                <div style={{display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'center'}}>
-                    {Object.keys(EMOTION_THEMES).map((key) => (
-                        <button key={key} onClick={() => handleMoodClick(key)} style={{padding: '15px 30px', borderRadius: '50px', border: '1px solid #ccc', cursor: 'pointer', background: 'white'}}>
-                            {EMOTION_THEMES[key].label}
-                        </button>
+            <div className="animate-up" style={{ maxWidth: '800px', margin: '4rem auto', textAlign: 'center' }}>
+                <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'var(--primary)' }}>Доброе утро, {user.fullName || user.username}! 👋</h1>
+                <p style={{ color: 'var(--slate-600)', fontSize: '1.1rem', marginBottom: '3.5rem' }}>Как ваше состояние в этот момент?</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1.5rem' }}>
+                    {MOOD_OPTIONS.map((mood) => (
+                        <div key={mood.key} className="glass-card" style={{ cursor: 'pointer', padding: '2rem 1rem', textAlign: 'center' }} onClick={() => handleMoodClick(mood.key)}>
+                            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{mood.emoji}</div>
+                            <div style={{ fontWeight: '700', color: 'var(--slate-800)' }}>{mood.label}</div>
+                        </div>
                     ))}
                 </div>
             </div>
@@ -126,102 +61,44 @@ export default function ClientHome() {
     }
 
     return (
-        <div className="diary-container">
-            <div style={{textAlign: 'center', marginBottom: '40px'}}>
-                <h2>Добро пожаловать!</h2>
-                <button onClick={resetMood} style={{border: 'none', background: 'transparent', color: '#667eea', cursor: 'pointer', textDecoration: 'underline'}}>
-                    Изменить настроение
-                </button>
+        <div className="animate-up">
+            <header style={{ marginBottom: '3rem' }}>
+                <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Ваш Путь к Спокойствию</h1>
+                <p style={{ color: 'var(--slate-600)', fontSize: '1.1rem' }}>Сегодня {new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            </header>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+                <div className="glass-card">
+                    <h2 style={{ marginBottom: '1.5rem' }}>📖 Дневник осознанности</h2>
+                    <p style={{ color: 'var(--slate-600)', marginBottom: '2.5rem', fontSize: '1.05rem' }}>
+                        Запишите мысли, которые возникли у вас сегодня. Это первый шаг к когнитивной переработке.
+                    </p>
+                    <button className="btn-primary" onClick={() => navigate('/diary')}>Начать запись</button>
+                </div>
+
+                <div className="glass-card" style={{ background: 'var(--accent-cream)', border: 'none' }}>
+                    <h3 style={{ marginBottom: '1rem', color: '#744210' }}>🎯 Текущее задание</h3>
+                    <p style={{ fontSize: '0.95rem', color: '#92400E' }}>Проверьте рекомендации от вашего специалиста на сегодня.</p>
+                    <button className="btn-primary" style={{ background: 'var(--slate-800)', marginTop: '2rem', width: '100%' }} onClick={() => navigate('/client-assignments')}>Открыть задания</button>
+                </div>
             </div>
 
-            <h3 style={{color: '#2c3e50', marginBottom: '20px'}}>Наши специалисты</h3>
-
-            {loading ? (
-                <p style={{textAlign: 'center'}}>Загрузка специалистов...</p>
-            ) : (
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px', marginBottom: '40px'}}>
-                    {psychologists.length > 0 ? (
-                        psychologists.map(psych => {
-                            // Проверяем, является ли этот психолог нашим
-                            const isMyPsychologist = user.psychologist && user.psychologist.id === psych.id;
-
-                            return (
-                                <div key={psych.id} style={{
-                                    background: 'white',
-                                    border: isMyPsychologist ? '2px solid #10b981' : '1px solid #eee',
-                                    borderRadius: '16px',
-                                    padding: '20px',
-                                    textAlign: 'center',
-                                    boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                                    position: 'relative' // Для бейджа
-                                }}>
-
-                                    {/* БЕЙДЖ "ВАШ ВЫБОР" */}
-                                    {isMyPsychologist && (
-                                        <div style={{position: 'absolute', top: '-10px', right: '-10px', background: '#10b981', color: 'white', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold'}}>
-                                            Ваш выбор
-                                        </div>
-                                    )}
-
-                                    <div style={{
-                                        width: '80px', height: '80px', borderRadius: '50%', margin: '0 auto 15px',
-                                        background: '#e2e8f0', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                    }}>
-                                        {psych.photoUrl ? (
-                                            <img
-                                                src={psych.photoUrl && psych.photoUrl.startsWith('http') ? psych.photoUrl : `http://localhost:8080${psych.photoUrl}`}
-                                                alt={psych.username}
-                                                style={{width: '100%', height: '100%', objectFit: 'cover'}}
-                                            />
-                                        ) : (
-                                            <span style={{fontSize: '1.5rem', fontWeight: 'bold', color: '#64748b'}}>
-                                                {(psych.fullName || psych.username).charAt(0).toUpperCase()}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <h4 style={{margin: '0 0 5px 0'}}>{psych.fullName || psych.username}</h4>
-                                    <p style={{fontSize: '0.9rem', color: '#666', marginBottom: '15px'}}>
-                                        {psych.specialization || "Психолог"}
-                                    </p>
-
-                                    {/* КНОПКИ ДЕЙСТВИЙ */}
-                                    <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-                                        {!isMyPsychologist && (
-                                            <button
-                                                onClick={() => handleSelectPsychologist(psych.id)}
-                                                className="btn-secondary"
-                                                style={{width: '100%', padding: '10px'}}
-                                            >
-                                                🤝 Выбрать
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => handleStartChat(psych)}
-                                            className="btn-primary"
-                                            style={{width: '100%', padding: '10px'}}
-                                        >
-                                            💬 Написать
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '30px', color: '#999'}}>
-                            <p>Психологи пока не зарегистрированы.</p>
-                        </div>
-                    )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '2rem' }}>
+                <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ fontSize: '3rem' }}>✨</div>
+                    <div>
+                        <h3 style={{ margin: 0 }}>Внутренний мир</h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--slate-600)', margin: '5px 0 15px' }}>Ваш сад спокойствия и роста.</p>
+                        <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }} onClick={() => navigate('/inner-world')}>Войти</button>
+                    </div>
                 </div>
-            )}
-
-            <div style={{display: 'flex', gap: '20px', flexWrap: 'wrap'}}>
-                <div onClick={() => window.location.href='/diary'} style={{cursor: 'pointer', flex: 1, padding: '20px', background: '#f8fafc', borderRadius: '12px', textAlign: 'center'}}>
-                    <div style={{fontSize: '2rem'}}>📖</div>
-                    <h3>Дневник</h3>
-                </div>
-                <div onClick={() => window.location.href='/dreams'} style={{cursor: 'pointer', flex: 1, padding: '20px', background: '#f8fafc', borderRadius: '12px', textAlign: 'center'}}>
-                    <div style={{fontSize: '2rem'}}>🌙</div>
-                    <h3>Сны</h3>
+                <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                    <div style={{ fontSize: '3rem' }}>🔮</div>
+                    <div>
+                        <h3 style={{ margin: 0 }}>Анализ снов</h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--slate-600)', margin: '5px 0 15px' }}>Разберитесь в образах подсознания.</p>
+                        <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.8rem' }} onClick={() => navigate('/dreams')}>Начать</button>
+                    </div>
                 </div>
             </div>
         </div>

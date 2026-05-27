@@ -1,14 +1,15 @@
 import React from 'react';
 import PsychologistSidebar from './PsychologistSidebar';
-import './App.css';
+import { Toaster } from 'react-hot-toast';
 
 export default function PsychologistLayout({ children }) {
     return (
-        <div className="client-layout">
+        <div className="app-layout">
             <PsychologistSidebar />
-            <div className="main-content">
+            <main className="main-content">
+                <Toaster position="top-center" />
                 {children}
-            </div>
+            </main>
         </div>
     );
 }

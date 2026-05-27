@@ -1,67 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import './App.css';
 import PsychologistCalendar from './PsychologistCalendar';
 
 export default function PsychologistHome() {
     const [clients, setClients] = useState([]);
-
-    // Получаем данные из объекта user
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const username = user.fullName || user.username || 'Доктор';
 
     useEffect(() => {
         if (user.id) {
-            // Загружаем только клиентов этого психолога
             fetch(`/api/psychologist/clients/my?psychologistId=${user.id}`)
-                .then(res => res.json())
-                .then(data => setClients(data.slice(0, 5)))
-                .catch(err => console.error("Ошибка загрузки клиентов:", err));
+                .then(res => res.ok ? res.json() : [])
+                .then(data => setClients(data.slice(0, 5)));
         }
     }, [user.id]);
 
     return (
-        <div className="diary-container" style={{maxWidth: '100%'}}>
-            <div style={{marginBottom: '20px'}}>
-                <h1>Здравствуйте, {username}! 👋</h1>
-                <div style={{marginBottom: '40px'}}>
-                    <h2>Мое расписание</h2>
-                    <PsychologistCalendar/>
-                </div>
-            </div>
+        <div className="animate-in">
+            <header style={{ marginBottom: '3rem' }}>
+                <h1 style={{ fontSize: '2.4rem', fontWeight: '800' }}>Добро пожаловать, {user.fullName || 'Доктор'}!</h1>
+                <p style={{ color: 'var(--slate-500)', fontSize: '1.1rem' }}>Ваша практика сегодня: у вас {clients.length} активных сессий в обзоре.</p>
+            </header>
 
-            <div style={{marginTop: '40px'}}>
-                <h3>Ваши последние клиенты</h3>
-                <div className="entry-list">
-                    {clients.length === 0 && <p style={{color: '#999'}}>У вас пока нет прикрепленных клиентов.</p>}
-                    {clients.map(client => (
-                        <div key={client.id} className="entry-item"
-                             style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                            <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-                                <div className="avatar-circle" style={{
-                                    width: '50px', height: '50px', borderRadius: '50%',
-                                    background: '#667eea', overflow: 'hidden',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white'
-                                }}>
-                                    {client.photoUrl ? (
-                                        <img src={`http://localhost:8080${client.photoUrl}`} style={{width:'100%', height:'100%', objectFit:'cover'}} />
-                                    ) : (
-                                        (client.fullName || client.username).charAt(0).toUpperCase()
-                                    )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2.5rem' }}>
+                {/* CLIENT OVERVIEW */}
+                <section>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                        <h2 style={{ fontSize: '1.4rem' }}>Недавние клиенты</h2>
+                        <Link to="/psychologist/clients" style={{ color: 'var(--primary)', fontWeight: '700', textDecoration: 'none' }}>Все клиенты →</Link>
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {clients.map(client => (
+                            <div key={client.id} className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                                    👤
                                 </div>
-                                <div>
-                                    <strong>{client.fullName || client.username}</strong> <br/>
-                                    <small style={{color: '#777'}}>{client.email}</small>
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ margin: 0 }}>{client.fullName || client.username}</h4>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--slate-500)', margin: 0 }}>Последняя активность: Вчера</p>
                                 </div>
-                            </div>
-                            <Link to={`/psychologist/client/${client.id}`}>
-                                <button className="btn-secondary" style={{padding: '8px 15px', fontSize: '0.85rem'}}>
+                                <Link to={`/psychologist/client/${client.id}`} className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
                                     Открыть карту
-                                </button>
-                            </Link>
-                        </div>
-                    ))}
-                </div>
+                                </Link>
+                            </div>
+                        ))}
+                        {clients.length === 0 && <p style={{ color: 'var(--slate-400)' }}>У вас пока нет прикрепленных клиентов.</p>}
+                    </div>
+                </section>
+
+                {/* QUICK CALENDAR / TASKS */}
+                <section>
+                    <h2 style={{ fontSize: '1.4rem', marginBottom: '1.5rem' }}>Расписание сессий</h2>
+                    <div className="glass-card" style={{ padding: '1.5rem' }}>
+                        <PsychologistCalendar />
+                    </div>
+                </section>
             </div>
         </div>
     );

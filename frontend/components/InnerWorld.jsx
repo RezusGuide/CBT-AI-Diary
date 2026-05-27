@@ -3,79 +3,75 @@ import { useNavigate } from 'react-router-dom';
 import PhaserGame from './PhaserGame';
 
 export default function InnerWorld() {
-    const [status, setStatus] = useState({ daysLogged: 0, requiredDays: 5, isUnlocked: false });
-    const [loading, setLoading] = useState(true);
-    const [isPlaying, setIsPlaying] = useState(false); // <--- Состояние: в игре ли юзер?
-
+    const [status, setStatus] = useState({ daysLogged: 0, entriesToUnlock: 3, isUnlocked: false });
+    const [showGame, setShowGame] = useState(false);
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const navigate = useNavigate();
 
     useEffect(() => {
-        if (user.id) fetchStatus();
-        else setLoading(false);
+        if (user.id) {
+            fetch(`/api/gamification/status/${user.id}`)
+                .then(res => res.json())
+                .then(data => setStatus(data));
+        }
     }, [user.id]);
 
-    const fetchStatus = async () => {
-        try {
-            const res = await fetch(`/api/gamification/status/${user.id}`);
-            if (res.ok) setStatus(await res.json());
-        } catch (e) { console.error("Ошибка проверки статуса", e); }
-        finally { setLoading(false); }
-    };
-
-    if (loading) return <div className="diary-container" style={{textAlign: 'center'}}>⏳ Синхронизация...</div>;
-
-    // ЕСЛИ ИГРОК НАЖАЛ "ВОЙТИ" - ПОКАЗЫВАЕМ ТОЛЬКО ИГРУ
-    if (isPlaying) {
-        return (
-            <div>
-                <button
-                    onClick={() => setIsPlaying(false)}
-                    className="btn-secondary"
-                    style={{marginLeft: '20px', marginTop: '20px'}}
-                >
-                    ⬅ Вернуться в меню
-                </button>
-                <PhaserGame />
-            </div>
-        );
+    if (showGame) {
+        return <PhaserGame onExit={() => setShowGame(false)} />;
     }
 
-    const progressPercent = Math.min((status.daysLogged / status.requiredDays) * 100, 100);
-
     return (
-        <div className="diary-container" style={{maxWidth: '700px', textAlign: 'center', padding: '50px 20px'}}>
-            <div style={{fontSize: '5rem', marginBottom: '20px'}}>🌱</div>
-            <h1 style={{color: '#2c3e50', marginBottom: '15px'}}>Ваш Внутренний Мир</h1>
+        <div className="diary-container animate-in" style={{ textAlign: 'center', background: 'linear-gradient(to bottom, var(--white), var(--p-100))' }}>
+            <header style={{ marginBottom: '4rem' }}>
+                <div style={{ fontSize: '5rem', marginBottom: '1.5rem' }}>🍃</div>
+                <h1 style={{ fontSize: '2.5rem', color: 'var(--p-600)' }}>Ваш Внутренний Сад</h1>
+                <p style={{ color: 'var(--slate-600)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto' }}>
+                    Это пространство — метафора вашего ментального состояния. Ухаживайте за ним, ведя дневник, и наблюдайте, как он расцветает.
+                </p>
+            </header>
 
-            {!status.isUnlocked ? (
-                <div style={{background: '#f8fafc', padding: '30px', borderRadius: '16px', border: '1px solid #e2e8f0'}}>
-                    <p style={{color: '#64748b', fontSize: '1.1rem', marginBottom: '30px'}}>
-                        Ваш сад еще формируется. Продолжайте вести дневник.
-                    </p>
-                    <div style={{marginBottom: '10px', fontWeight: 'bold', color: '#475569'}}>
-                        Собрано энергии: {status.daysLogged} / {status.requiredDays}
+            <div className="glass-card" style={{ maxWidth: '500px', margin: '0 auto', padding: '3rem' }}>
+                {status.isUnlocked ? (
+                    <div className="animate-up">
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✨</div>
+                        <h2 style={{ marginBottom: '1.5rem' }}>Сад открыт</h2>
+                        <p style={{ color: 'var(--slate-500)', marginBottom: '2.5rem' }}>
+                            Сегодня в вашем мире спокойная погода. Готовы прогуляться?
+                        </p>
+                        <button 
+                            className="btn-primary" 
+                            style={{ width: '100%', padding: '1.25rem', fontSize: '1.1rem' }}
+                            onClick={() => setShowGame(true)}
+                        >
+                            Войти в свой мир ✨
+                        </button>
                     </div>
-                    <div style={{width: '100%', height: '20px', background: '#e2e8f0', borderRadius: '10px', overflow: 'hidden', marginBottom: '30px'}}>
-                        <div style={{width: `${progressPercent}%`, height: '100%', background: 'linear-gradient(90deg, #48bb78 0%, #38a169 100%)', transition: 'width 1s ease-in-out'}}></div>
+                ) : (
+                    <div className="animate-up">
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
+                        <h2 style={{ marginBottom: '1rem' }}>Мир пока скрыт</h2>
+                        <p style={{ color: 'var(--slate-500)', marginBottom: '2rem' }}>
+                            Для доступа к саду нужно сделать еще <strong>{status.entriesToUnlock - status.daysLogged}</strong> записи в дневнике.
+                        </p>
+                        
+                        {/* PROGRESS BAR */}
+                        <div style={{ height: '12px', background: 'var(--p-100)', borderRadius: '6px', marginBottom: '1rem', overflow: 'hidden' }}>
+                            <div style={{ 
+                                width: `${(status.daysLogged / status.entriesToUnlock) * 100}%`, 
+                                height: '100%', 
+                                background: 'var(--p-600)',
+                                transition: 'width 1s ease'
+                            }} />
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--slate-400)', fontWeight: '700' }}>
+                            {status.daysLogged} / {status.entriesToUnlock} ДНЕЙ
+                        </div>
                     </div>
-                    <button onClick={() => navigate('/diary')} className="btn-primary" style={{padding: '10px 30px', fontSize: '1.1rem'}}>Перейти в дневник ✍️</button>
-                </div>
-            ) : (
-                <div style={{background: '#ecfdf5', padding: '40px 30px', borderRadius: '16px', border: '2px solid #10b981', boxShadow: '0 10px 25px rgba(16, 185, 129, 0.15)'}}>
-                    <h2 style={{color: '#065f46', marginTop: 0}}>Сад готов!</h2>
-                    <p style={{color: '#047857', fontSize: '1.1rem', marginBottom: '30px'}}>
-                        Войдите, чтобы ухаживать за растениями и восстанавливать гармонию.
-                    </p>
-                    <button
-                        onClick={() => setIsPlaying(true)} // <--- Запускаем игру
-                        className="btn-primary"
-                        style={{padding: '15px 40px', fontSize: '1.2rem', background: '#10b981', border: 'none', borderRadius: '50px', boxShadow: '0 4px 15px rgba(16,185,129,0.4)'}}
-                    >
-                        Войти в свой мир ✨
-                    </button>
-                </div>
-            )}
+                )}
+            </div>
+
+            <div style={{ marginTop: '4rem', color: 'var(--slate-400)', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                "Сад — это отражение души. Сорняки — это тревоги, а цветы — ваша осознанность."
+            </div>
         </div>
     );
 }

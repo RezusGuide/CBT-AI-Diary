@@ -1,13 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import MainScene from '../src/game/MainScene';
-import toast from 'react-hot-toast'; // Обязательно импортируем тосты
+import toast from 'react-hot-toast';
 
-export default function PhaserGame() {
+export default function PhaserGame({ onExit }) {
     const gameRef = useRef(null);
 
     useEffect(() => {
-        // Конфигурация движка
         const config = {
             type: Phaser.AUTO,
             width: 800,
@@ -20,42 +19,34 @@ export default function PhaserGame() {
             scene: [MainScene]
         };
 
-        const game = new Phaser.Game(config);
-        gameRef.current = game;
+        gameRef.current = new Phaser.Game(config);
 
-        // ЛОВИМ СИГНАЛЫ ИЗ ИГРЫ
-        const handleWeedPulled = () => {
-            // Массив поддерживающих фраз
-            const affirmations = [
-                "С каждым убранным сорняком становится легче 🌱",
-                "Отличная работа! Вы расчищаете место для нового ☀️",
-                "Маленький шаг к спокойствию сделан 🧘‍♂️",
-                "Внутренний сад становится чище ✨"
-            ];
-            const randomMsg = affirmations[Math.floor(Math.random() * affirmations.length)];
-            toast.success(randomMsg, { duration: 3000, icon: '🌻' });
-        };
-
-        // Подписываемся на событие
-        window.addEventListener('weed-pulled', handleWeedPulled);
-
-        // Очистка при закрытии окна
         return () => {
-            if (gameRef.current) gameRef.current.destroy(true);
-            window.removeEventListener('weed-pulled', handleWeedPulled);
+            if (gameRef.current) {
+                gameRef.current.destroy(true);
+            }
         };
     }, []);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '10px' }}>
-            <p style={{color: '#64748b', marginBottom: '10px'}}>
-                Управление: <b>WASD</b> или <b>Стрелочки</b>. Очистка сорняков: подойдите и нажмите <b>Пробел</b>.
-            </p>
-            <div
-                id="phaser-container"
-                style={{ borderRadius: '12px', overflow: 'hidden', border: '4px solid #10b981', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
-            >
+        <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', width: '800px', alignItems: 'center' }}>
+                <div>
+                    <h3 style={{ margin: 0 }}>Ваш Внутренний Мир</h3>
+                    <small style={{ color: 'var(--slate-400)' }}>Используйте стрелки для прогулки. Пробел, чтобы убрать сорняки.</small>
+                </div>
+                <button className="btn-secondary" onClick={onExit} style={{ padding: '8px 20px' }}>Вернуться в кабинет</button>
             </div>
+
+            <div 
+                id="phaser-container" 
+                style={{ 
+                    borderRadius: '24px', 
+                    overflow: 'hidden', 
+                    boxShadow: '0 20px 50px rgba(108, 99, 255, 0.2)',
+                    border: '8px solid var(--white)'
+                }}
+            />
         </div>
     );
 }

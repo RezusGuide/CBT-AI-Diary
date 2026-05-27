@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import './App.css';
 
 export default function DreamAnalysis() {
     const [dreams, setDreams] = useState([]);
     const [newDream, setNewDream] = useState('');
-    const [editingId, setEditingId] = useState(null);
-    const [editContent, setEditContent] = useState('');
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -21,98 +19,64 @@ export default function DreamAnalysis() {
         } catch (e) { console.error(e); }
     };
 
-    // СОЗДАНИЕ
     const handleCreate = async (e) => {
         e.preventDefault();
         if (!newDream.trim()) return;
 
-        const res = await fetch('/api/dreams', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id, content: newDream })
-        });
+        setIsAnalyzing(true);
+        try {
+            const res = await fetch('/api/dreams', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, text: newDream })
+            });
 
-        if (res.ok) {
-            setNewDream('');
-            fetchDreams();
-            toast.success("Сон сохранен");
-        }
-    };
-
-    // РЕДАКТИРОВАНИЕ
-    const startEdit = (dream) => {
-        setEditingId(dream.id);
-        setEditContent(dream.content || dream.text);
-    };
-
-    const handleUpdate = async (id) => {
-        const res = await fetch(`/api/dreams/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: editContent })
-        });
-
-        if (res.ok) {
-            setEditingId(null);
-            fetchDreams();
-            toast.success("Запись сна обновлена");
-        }
-    };
-
-    // УДАЛЕНИЕ
-    const handleDelete = async (id) => {
-        const res = await fetch(`/api/dreams/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-            fetchDreams();
-            toast.success("Сон удален");
-        }
+            if (res.ok) {
+                setNewDream('');
+                fetchDreams();
+                toast.success("Сон сохранен и проанализирован ✨");
+            }
+        } catch (e) { toast.error("Ошибка AI анализа"); }
+        finally { setIsAnalyzing(false); }
     };
 
     return (
-        <div className="diary-container" style={{maxWidth: '800px'}}>
-            <h1 style={{textAlign: 'center', marginBottom: '20px', color: '#4c1d95'}}>Дневник Снов</h1>
+        <div className="diary-container animate-in">
+            <header style={{ marginBottom: '3rem', textAlign: 'center' }}>
+                <h1 style={{ color: 'var(--primary)' }}>Архив Сновидений</h1>
+                <p style={{ color: 'var(--slate-500)' }}>Исследуйте символы вашего подсознания с помощью AI-анализа.</p>
+            </header>
 
-            <form onSubmit={handleCreate} style={{marginBottom: '30px', background: '#f5f3ff', padding: '20px', borderRadius: '12px', border: '1px solid #ddd6fe'}}>
-                <textarea
-                    placeholder="Опишите, что вам приснилось..."
-                    value={newDream}
-                    onChange={(e) => setNewDream(e.target.value)}
-                    style={{width: '100%', height: '100px', padding: '15px', borderRadius: '8px', border: '1px solid #c4b5fd', marginBottom: '10px'}}
-                    required
-                />
-                <button type="submit" className="btn-primary" style={{width: '100%', background: '#7c3aed'}}>Записать сон</button>
-            </form>
+            <div className="glass-card" style={{ background: 'var(--p-100)', border: 'none', marginBottom: '4rem' }}>
+                <h3 style={{ marginBottom: '1rem' }}>Что вам приснилось сегодня?</h3>
+                <form onSubmit={handleCreate}>
+                    <textarea
+                        placeholder="Опишите сюжет, чувства и образы..."
+                        value={newDream}
+                        onChange={(e) => setNewDream(e.target.value)}
+                        style={{ height: '120px', marginBottom: '1.5rem', background: 'var(--white)' }}
+                        required
+                    />
+                    <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={isAnalyzing}>
+                        {isAnalyzing ? '🧠 Анализируем символы...' : 'Записать и получить интерпретацию'}
+                    </button>
+                </form>
+            </div>
 
-            <div className="entry-list">
-                {dreams.length === 0 && <p style={{textAlign: 'center', color: '#94a3b8'}}>Вы еще не записывали свои сны.</p>}
-
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                 {dreams.map(dream => (
-                    <div key={dream.id} className="entry-item" style={{position: 'relative', borderLeft: '4px solid #8b5cf6'}}>
-                        <small style={{color: '#94a3b8'}}>{new Date(dream.createdAt).toLocaleString()}</small>
-
-                        {/* КНОПКИ УПРАВЛЕНИЯ */}
-                        <div style={{position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '10px'}}>
-                            <button onClick={() => startEdit(dream)} style={{background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem'}}>✏️</button>
-                            <button onClick={() => handleDelete(dream.id)} style={{background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#ef4444'}}>🗑️</button>
-                        </div>
-
-                        {/* РЕЖИМ РЕДАКТИРОВАНИЯ ИЛИ ПРОСМОТРА */}
-                        {editingId === dream.id ? (
-                            <div style={{marginTop: '15px'}}>
-                                <textarea
-                                    value={editContent}
-                                    onChange={(e) => setEditContent(e.target.value)}
-                                    style={{width: '100%', height: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #7c3aed', marginBottom: '10px'}}
-                                />
-                                <div style={{display: 'flex', gap: '10px'}}>
-                                    <button onClick={() => handleUpdate(dream.id)} className="btn-primary" style={{padding: '5px 15px', background: '#7c3aed'}}>Сохранить</button>
-                                    <button onClick={() => setEditingId(null)} className="btn-secondary" style={{padding: '5px 15px'}}>Отмена</button>
-                                </div>
+                    <div key={dream.id} className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
+                        <div style={{ padding: '2rem' }}>
+                            <div style={{ color: 'var(--slate-400)', fontSize: '0.8rem', marginBottom: '1rem' }}>
+                                {new Date(dream.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
                             </div>
-                        ) : (
-                            <p style={{marginTop: '15px', whiteSpace: 'pre-wrap', paddingRight: '50px'}}>
-                                {dream.content || dream.text}
-                            </p>
+                            <p style={{ fontSize: '1.1rem', fontStyle: 'italic', color: 'var(--slate-700)' }}>"{dream.text}"</p>
+                        </div>
+                        {dream.interpretation && (
+                            <div className="ai-box" style={{ margin: '0 2rem 2rem' }}>
+                                <div style={{ fontWeight: '800', color: '#92400E', marginBottom: '0.5rem', fontSize: '0.9rem' }}>✨ Психологическая интерпретация (AI)</div>
+                                <p style={{ margin: 0, fontSize: '0.95rem', color: '#744210', lineHeight: 1.7 }}>{dream.interpretation}</p>
+                            </div>
                         )}
                     </div>
                 ))}

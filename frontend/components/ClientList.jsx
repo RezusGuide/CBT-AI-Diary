@@ -1,73 +1,74 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Добавили useNavigate
+import { Link } from 'react-router-dom';
 
 export default function ClientList() {
     const [clients, setClients] = useState([]);
     const [search, setSearch] = useState('');
-    const navigate = useNavigate(); // Инициализируем навигацию
-
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const psychId = user.id;
 
     useEffect(() => {
-        if (psychId) fetchClients();
-    }, [psychId, search]);
-
-    const fetchClients = async () => {
+        const psychId = user.id;
         const url = `/api/psychologist/clients/my?psychologistId=${psychId}${search ? `&search=${search}` : ''}`;
-        const res = await fetch(url);
-        if(res.ok) setClients(await res.json());
-    };
+        fetch(url).then(res => res.ok ? res.json() : []).then(data => setClients(data));
+    }, [search, user.id]);
 
     return (
-        <div className="diary-container">
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-                <h2>Мои клиенты</h2>
-                <div style={{color: '#666'}}>Всего: {clients.length}</div>
-            </div>
+        <div className="animate-in">
+            <header style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h1 style={{ fontSize: '2rem', fontWeight: '800' }}>Мои Клиенты</h1>
+                    <p style={{ color: 'var(--slate-500)' }}>Управление вашей базой активных сессий</p>
+                </div>
+                <div style={{ width: '300px' }}>
+                    <input 
+                        type="text" 
+                        placeholder="🔍 Поиск по имени..." 
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        style={{ background: 'var(--white)', border: '1px solid var(--slate-200)' }}
+                    />
+                </div>
+            </header>
 
-            <input
-                type="text"
-                placeholder="Поиск по имени или логину..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{padding: '12px', width: '100%', marginBottom: '25px', borderRadius: '10px', border: '1px solid #ddd'}}
-            />
-
-            <div className="entry-list">
-                {clients.length === 0 && <p style={{textAlign: 'center', color: '#999'}}>Клиенты не найдены.</p>}
-
-                {/* Исправленный цикл отображения */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
                 {clients.map(client => (
-                    <div key={client.id} className="entry-item" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
-                        <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-                            <div style={{width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                {client.photoUrl ? (
-                                    <img src={`http://localhost:8080${client.photoUrl}`} style={{width:'100%', height:'100%', objectFit:'cover'}} alt="avatar" />
-                                ) : (
-                                    <span>{(client.fullName || client.username).charAt(0).toUpperCase()}</span>
-                                )}
+                    <div key={client.id} className="glass-card" style={{ padding: '2rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                            <div style={{ 
+                                width: '64px', height: '64px', borderRadius: '16px', 
+                                background: 'linear-gradient(135deg, var(--p-100) 0%, var(--white) 100%)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '1.5rem', border: '1px solid var(--p-100)'
+                            }}>
+                                👤
                             </div>
-                            <strong>{client.fullName || client.username}</strong>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{client.fullName || client.username}</h3>
+                                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--slate-400)' }}>ID: #{client.id.toString().padStart(4, '0')}</p>
+                            </div>
                         </div>
 
-                        <div style={{display: 'flex', gap: '10px'}}>
-                            <button
-                                onClick={() => {
-                                    localStorage.setItem('chatTarget', JSON.stringify(client));
-                                    navigate('/psychologist/chat');
-                                }}
-                                className="btn-secondary"
-                                style={{padding: '8px 15px'}}
+                        <div style={{ borderTop: '1px solid var(--slate-200)', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                                <span style={{ color: 'var(--slate-500)' }}>Email:</span>
+                                <span style={{ fontWeight: '600' }}>{client.email || '—'}</span>
+                            </div>
+                            <Link 
+                                to={`/psychologist/client/${client.id}`} 
+                                className="btn-primary" 
+                                style={{ width: '100%', padding: '10px' }}
                             >
-                                💬 Чат
-                            </button>
-                            <Link to={`/psychologist/client/${client.id}`}>
-                                <button className="btn-primary" style={{padding: '8px 15px'}}>Открыть карту</button>
+                                Перейти в карту
                             </Link>
                         </div>
                     </div>
                 ))}
+                {clients.length === 0 && (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '5rem', color: 'var(--slate-400)' }}>
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👥</div>
+                        <p>У вас пока нет прикрепленных клиентов.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
