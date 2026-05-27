@@ -9,45 +9,38 @@ const PsychologistSidebar = () => {
     const isActive = (path) => location.pathname === path;
 
     return (
-        <aside className="sidebar">
-            <div className="sidebar-brand">
-                <span style={{ fontSize: '1.8rem' }}>🩺</span>
-                <div style={{ lineHeight: 1 }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: '800' }}>CBT Specialist</div>
-                    <div style={{ fontSize: '0.6rem', color: 'var(--slate-400)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>Practice Management</div>
-                </div>
-            </div>
-
-            <nav className="nav-links" style={{ flex: 1 }}>
-                <Link to="/psychologist" className={`nav-item ${isActive('/psychologist') ? 'active' : ''}`}>
-                    <span>📊</span> Рабочий стол
-                </Link>
-                <Link to="/psychologist/clients" className={`nav-item ${isActive('/psychologist/clients') ? 'active' : ''}`}>
-                    <span>👥</span> Мои клиенты
-                </Link>
-                <Link to="/psychologist/notes" className={`nav-item ${isActive('/psychologist/notes') ? 'active' : ''}`}>
-                    <span>📝</span> Заметки
-                </Link>
-                <Link to="/psychologist/assignments" className={`nav-item ${isActive('/psychologist/assignments') ? 'active' : ''}`}>
-                    <span>🎯</span> Назначить задание
-                </Link>
-                <Link to="/psychologist/chat" className={`nav-item ${isActive('/psychologist/chat') ? 'active' : ''}`}>
-                    <span>💬</span> Чат сессии
-                </Link>
-            </nav>
-
-            <div style={{ marginTop: 'auto', borderTop: '1px solid var(--primary-soft)', paddingTop: '1.5rem' }}>
-                <Link to="/psychologist/profile" className="nav-item">
-                    <div className="avatar-circle" style={{ width: '24px', height: '24px', background: 'var(--primary)', fontSize: '0.7rem' }}>
-                        {displayName.charAt(0).toUpperCase()}
+        <div className="sidebar" style={{backgroundColor: '#1a2a3a'}}> {/* Чуть темнее для отличия */}
+            <Link to="/psychologist/profile" style={{textDecoration: 'none'}}>
+                <div className="user-profile">
+                    <div className="avatar-circle" style={{overflow: 'hidden', background: '#3498db'}}>
+                        {user.photoUrl ? (
+                            <img src={`http://localhost:8080${user.photoUrl}`} style={{width:'100%', height:'100%', objectFit:'cover'}} />
+                        ) : (
+                            <span style={{color: 'white'}}>{displayName.charAt(0).toUpperCase()}</span>
+                        )}
                     </div>
-                    {displayName}
+                    <h3 style={{color: 'white'}}>{displayName}</h3>
+                    <div style={{fontSize: '0.7rem', color: '#bdc3c7'}}>Панель специалиста</div>
+                </div>
+            </Link>
+
+            <nav className="nav-links">
+                <Link to="/psychologist" className={`nav-item ${isActive('/psychologist') ? 'highlight-item' : ''}`}>🏠 <span>Рабочий стол</span></Link>
+                <Link to="/psychologist/clients" className={`nav-item ${isActive('/psychologist/clients') ? 'highlight-item' : ''}`}>👥 <span>Мои клиенты</span></Link>
+                <Link to="/psychologist/notes" className={`nav-item ${isActive('/psychologist/notes') ? 'highlight-item' : ''}`}>📝 <span>Заметки</span></Link>
+                <Link to="/psychologist/assignments" className={`nav-item ${isActive('/psychologist/assignments') ? 'active' : ''}`}>
+                    🎯 <span>Назначить задания</span>
                 </Link>
-                <button onClick={() => {localStorage.clear(); window.location.href='/login'}} className="nav-item" style={{ width: '100%', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left', color: '#E53E3E' }}>
-                    <span>🚪</span> Выйти
+                <Link to="/psychologist/chat" className={`nav-item ${isActive('/psychologist/chat') ? 'highlight-item' : ''}`}>💬 <span>Чат</span></Link>
+                <button
+                    onClick={() => {localStorage.clear(); window.location.href='/login'}}
+                    className="nav-item logout-btn"
+                    style={{background: 'transparent', color: 'rgba(255,255,255,0.7)', boxShadow: 'none'}}
+                >
+                    🚪 <span>Выход</span>
                 </button>
-            </div>
-        </aside>
+            </nav>
+        </div>
     );
 };
 

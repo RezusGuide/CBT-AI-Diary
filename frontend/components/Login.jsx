@@ -1,70 +1,88 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import './App.css'; // Убедись, что CSS подключен
 
-export default function Login() {
-    const [formData, setFormData] = useState({ username: '', password: '' });
+const Login = () => {
+    const [formData, setFormData] = useState({
+        username: '',
+        password: ''
+    });
     const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
+
         try {
-            const res = await fetch('/api/auth/login', {
+            // ВАЖНО: Убедись, что адрес правильный (обычно /auth/login или /api/auth/login)
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(formData)
             });
 
-            if (res.ok) {
-                const user = await res.json();
-                localStorage.setItem('user', JSON.stringify(user));
-                toast.success(`Рады видеть вас снова, ${user.fullName || user.username}!`);
-                
-                if (user.role === 'PSYCHOLOGIST') navigate('/psychologist');
-                else navigate('/client-home');
+            if (response.ok) {
+                // 1. Получаем данные пользователя от сервера (там будет id, fullName, role и т.д.)
+                const data = await response.json();
+
+                console.log("Успешный вход! Данные сервера:", data); // Для проверки в консоли
+
+                // 2. !!! САМОЕ ВАЖНОЕ: СОХРАНЯЕМ ИХ В БРАУЗЕРЕ !!!
+                localStorage.setItem('user', JSON.stringify(data));
+
+                toast.success(`Добро пожаловать, ${data.fullName || data.username}!`, { duration: 2500 });
+
+                // 3. Перенаправляем в зависимости от роли
+                if (data.role === 'PSYCHOLOGIST') {
+                    navigate('/psychologist');
+                } else {
+                    navigate('/client-home');
+                }
             } else {
                 toast.error("Неверный логин или пароль");
             }
-        } catch (error) { toast.error("Ошибка соединения с сервером"); }
+        } catch (error) {
+            console.error("Ошибка входа:", error);
+            toast.error("Ошибка соединения с сервером");
+        }
     };
 
     return (
-        <div className="app-layout" style={{ justifyContent: 'center', alignItems: 'center', marginLeft: 0 }}>
-            <div className="diary-container animate-up" style={{ maxWidth: '420px', width: '100%', padding: '3.5rem 2.5rem' }}>
-                <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🧠</div>
-                    <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>Вход в систему</h2>
-                    <p style={{ color: 'var(--slate-500)', marginTop: '0.5rem' }}>Продолжите работу над собой</p>
-                </div>
-
-                <form onSubmit={handleLogin}>
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--slate-600)' }}>ЛОГИН</label>
-                        <input
-                            type="text"
-                            placeholder="Ваш username"
-                            value={formData.username}
-                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <div style={{ marginBottom: '2rem' }}>
-                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--slate-600)' }}>ПАРОЛЬ</label>
-                        <input
-                            type="password"
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <button type="submit" className="btn-primary" style={{ width: '100%', padding: '1rem' }}>Войти в кабинет</button>
+        <div className="auth-wrapper">
+            <div className="auth-container">
+                <h2>Вход в систему</h2>
+                <form onSubmit={handleSubmit}>
+                    <input
+                        type="text"
+                        name="username"
+                        placeholder="Логин (username)"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                    />
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Пароль"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                    />
+                    <button type="submit" className="btn-primary">Войти</button>
                 </form>
 
-                <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '0.9rem', color: 'var(--slate-500)' }}>
-                    Впервые у нас? <Link to="/register" style={{ color: 'var(--p-600)', fontWeight: '700', textDecoration: 'none' }}>Создать аккаунт</Link>
+                <div className="auth-links">
+                    Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
                 </div>
             </div>
         </div>
     );
-}
+};
+
+export default Login;

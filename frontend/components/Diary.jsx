@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import './App.css';
 
 export default function DiaryHome() {
     const [entries, setEntries] = useState([]);
@@ -18,7 +19,9 @@ export default function DiaryHome() {
             const res = await fetch(`/api/diary/user/${user.id}`);
             if (res.ok) {
                 const data = await res.json();
-                setEntries(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+                // Сортируем так, чтобы новые были сверху
+                const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                setEntries(sorted);
             }
         } catch (e) { console.error(e); }
     };
@@ -36,55 +39,107 @@ export default function DiaryHome() {
         if (res.ok) {
             setNewText('');
             fetchEntries();
-            toast.success("Запись сохранена ✨");
+            toast.success("Запись сохранена!");
+        } else {
+            const errorText = await res.text();
+            toast.error(errorText || "Ошибка сохранения");
         }
     };
 
+    const startEdit = (entry) => {
+        setEditingId(entry.id);
+        setEditText(entry.text || entry.content);
+    };
+
+    const handleUpdate = async (id) => {
+        const res = await fetch(`/api/diary/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: editText })
+        });
+
+        if (res.ok) {
+            setEditingId(null);
+            fetchEntries();
+            toast.success("Запись дополнена");
+        }
+    };
+
+    const handleDelete = async (id) => {
+        const res = await fetch(`/api/diary/${id}`, { method: 'DELETE' });
+
+        if (res.ok) {
+            if (editingId === id) {
+                setEditingId(null);
+            }
+            fetchEntries();
+            toast.success("Запись удалена");
+        } else {
+            toast.error("Не удалось удалить запись");
+        }
+    };
+
+    // ПРОВЕРКА: Писал ли пользователь сегодня?
     const todayStr = new Date().toLocaleDateString();
-    const hasTodayEntry = entries.some(e => new Date(e.createdAt).toLocaleDateString() === todayStr);
+    const hasTodayEntry = entries.some(entry => new Date(entry.createdAt).toLocaleDateString() === todayStr);
 
     return (
-        <div className="diary-container animate-up">
-            <header style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
-                <h1 style={{ fontSize: '2.2rem' }}>Мой Дневник</h1>
-                <p style={{ color: 'var(--slate-600)' }}>Осознанность начинается с честности перед самим собой.</p>
-            </header>
+        <div className="diary-container" style={{maxWidth: '800px'}}>
+            <h1 style={{textAlign: 'center', marginBottom: '20px'}}>Мой Дневник</h1>
 
+            {/* Если сегодня записи еще не было - показываем форму */}
             {!hasTodayEntry ? (
-                <div className="glass-card" style={{ background: 'var(--p-100)', border: 'none' }}>
-                    <h3 style={{ marginBottom: '1rem' }}>Как прошел ваш день?</h3>
-                    <form onSubmit={handleCreate}>
-                        <textarea
-                            placeholder="Опишите свои мысли и чувства..."
-                            value={newText}
-                            onChange={(e) => setNewText(e.target.value)}
-                            style={{ height: '150px', marginBottom: '1.5rem', background: 'var(--white)' }}
-                            required
-                        />
-                        <button type="submit" className="btn-primary" style={{ width: '100%' }}>Сохранить запись</button>
-                    </form>
-                </div>
+                <form onSubmit={handleCreate} style={{marginBottom: '30px', background: '#f8fafc', padding: '20px', borderRadius: '12px'}}>
+                    <h3 style={{marginTop: 0, color: '#475569'}}>Главная мысль дня</h3>
+                    <textarea
+                        placeholder="Опишите свои чувства и события за сегодня..."
+                        value={newText}
+                        onChange={(e) => setNewText(e.target.value)}
+                        style={{width: '100%', height: '100px', padding: '15px', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '10px'}}
+                        required
+                    />
+                    <button type="submit" className="btn-primary" style={{width: '100%'}}>Сохранить запись на сегодня</button>
+                </form>
             ) : (
-                <div className="glass-card" style={{ textAlign: 'center', border: '2px solid var(--success)', background: '#F0FFF4' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
-                    <h3 style={{ color: '#22543D', margin: 0 }}>Запись на сегодня готова</h3>
-                    <p style={{ color: '#2F855A', fontSize: '0.9rem', marginTop: '0.5rem' }}>Вы можете просмотреть или дополнить её ниже.</p>
+                // Если запись есть - показываем заглушку
+                <div style={{marginBottom: '30px', background: '#ecfdf5', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid #10b981'}}>
+                    <h3 style={{margin: 0, color: '#065f46'}}>✅ Запись на сегодня создана</h3>
+                    <p style={{color: '#047857', fontSize: '0.9rem'}}>Вы можете дополнить её, нажав кнопку редактирования (✏️) ниже.</p>
                 </div>
             )}
 
-            <div style={{ marginTop: '4rem' }}>
-                <h2 style={{ marginBottom: '2rem', fontSize: '1.5rem' }}>История записей</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {entries.map(entry => (
-                        <div key={entry.id} className="glass-card" style={{ padding: '2rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid var(--p-100)', paddingBottom: '1rem' }}>
-                                <span style={{ fontWeight: '700', color: 'var(--p-600)' }}>{new Date(entry.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</span>
-                                <span style={{ fontSize: '0.8rem', color: 'var(--slate-400)' }}>{new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                            </div>
-                            <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', color: 'var(--slate-800)' }}>{entry.text || entry.content}</p>
+            <div className="entry-list">
+                {entries.length === 0 && <p style={{textAlign: 'center', color: '#94a3b8'}}>Здесь пока пусто.</p>}
+
+                {entries.map(entry => (
+                    <div key={entry.id} className="entry-item" style={{position: 'relative'}}>
+                        <small style={{color: '#94a3b8', fontWeight: 'bold'}}>{new Date(entry.createdAt).toLocaleDateString()}</small>
+                        <small style={{color: '#cbd5e1', marginLeft: '10px'}}>{new Date(entry.createdAt).toLocaleTimeString()}</small>
+
+                        <div style={{position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '8px'}}>
+                            <button onClick={() => startEdit(entry)} style={{background: '#f1f5f9', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer', fontSize: '1.1rem'}}>✏️ Дополнить</button>
+                            <button onClick={() => handleDelete(entry.id)} style={{background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#ef4444'}}>🗑️</button>
                         </div>
-                    ))}
-                </div>
+
+                        {editingId === entry.id ? (
+                            <div style={{marginTop: '15px'}}>
+                                <textarea
+                                    value={editText}
+                                    onChange={(e) => setEditText(e.target.value)}
+                                    style={{width: '100%', height: '150px', padding: '10px', borderRadius: '8px', border: '2px solid #667eea', marginBottom: '10px'}}
+                                />
+                                <div style={{display: 'flex', gap: '10px'}}>
+                                    <button onClick={() => handleUpdate(entry.id)} className="btn-primary" style={{padding: '8px 20px'}}>💾 Сохранить изменения</button>
+                                    <button onClick={() => setEditingId(null)} className="btn-secondary" style={{padding: '8px 20px'}}>Отмена</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <p style={{marginTop: '25px', whiteSpace: 'pre-wrap', color: '#333', lineHeight: '1.6'}}>
+                                {entry.text || entry.content}
+                            </p>
+                        )}
+                    </div>
+                ))}
             </div>
         </div>
     );
