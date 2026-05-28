@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 export default function Register() {
     const [formData, setFormData] = useState({ username: '', password: '', role: 'CLIENT' });
@@ -9,7 +10,7 @@ export default function Register() {
     const handleRegister = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch('/api/auth/register', {
+            const res = await fetch(API_URL('/api/auth/register'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

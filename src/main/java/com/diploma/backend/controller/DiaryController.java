@@ -18,6 +18,7 @@ public class DiaryController {
 
     private final DiaryEntryRepository diaryRepository;
     private final UserRepository userRepository;
+    
     @GetMapping
     public List<DiaryEntry> getAllEntries(@RequestParam Long userId) {
         return diaryRepository.findAllByUser_IdOrderByCreatedAtDesc(userId);
@@ -27,6 +28,7 @@ public class DiaryController {
     public ResponseEntity<List<DiaryEntry>> getHistory(@RequestParam Long userId) {
         return ResponseEntity.ok(diaryRepository.findAllByUser_IdOrderByCreatedAtDesc(userId));
     }
+    
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<DiaryEntry>> getUserEntries(@PathVariable Long userId) {
         return ResponseEntity.ok(diaryRepository.findByUser_Id(userId));
@@ -38,7 +40,7 @@ public class DiaryController {
         try {
             Long userId = Long.valueOf(payload.get("userId").toString());
 
-            // Используем правильный метод с подчеркиванием
+            // Используем правильный метод
             var entries = diaryRepository.findByUser_Id(userId);
 
             // Проверяем, есть ли среди них запись за СЕГОДНЯ
@@ -68,12 +70,8 @@ public class DiaryController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateDiaryEntry(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         try {
-            // Замени DiaryEntry на то, как точно называется твоя сущность (может быть Diary)
             var entry = diaryRepository.findById(id).orElseThrow();
-
-            // Замени setText на setContent, если в сущности поле называется content
             entry.setText(payload.get("text"));
-
             return ResponseEntity.ok(diaryRepository.save(entry));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());

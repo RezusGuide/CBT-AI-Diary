@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 export default function PsychologistNotes() {
     const [notes, setNotes] = useState([]);
@@ -14,16 +15,16 @@ export default function PsychologistNotes() {
     }, []);
 
     const fetchNotes = () => {
-        fetch(`/api/notes/psychologist/${user.id}`).then(res => res.json()).then(data => setNotes(data));
+        fetch(API_URL(`/api/notes?psychologistId=${user.id}`)).then(res => res.json()).then(data => setNotes(data));
     };
 
     const fetchClients = () => {
-        fetch(`/api/psychologist/clients/my?psychologistId=${user.id}`).then(res => res.json()).then(data => setClients(data));
+        fetch(API_URL(`/api/psychologist/clients/my?psychologistId=${user.id}`)).then(res => res.json()).then(data => setClients(data));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        fetch('/api/notes', {
+        fetch(API_URL('/api/notes'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...formData, psychologistId: user.id })

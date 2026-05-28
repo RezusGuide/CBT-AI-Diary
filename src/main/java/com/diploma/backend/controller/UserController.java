@@ -45,10 +45,64 @@ public class UserController {
             return ResponseEntity.internalServerError().body("Ошибка загрузки файла");
         }
     }
+
+    @PutMapping("/{id}/profile-picture")
+    public ResponseEntity<?> updateProfilePicture(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String base64Image = body.get("profilePicture");
+        if (base64Image == null || base64Image.isBlank()) {
+            return ResponseEntity.badRequest().body("No image data provided");
+        }
+        if (base64Image.length() > 1_000_000) {
+            return ResponseEntity.badRequest().body("Image too large. Max 750KB.");
+        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setProfilePicture(base64Image);
+        userRepository.save(user);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/profile-picture")
+    public ResponseEntity<Map<String, String>> getProfilePicture(@PathVariable Long id) {
+        String picture = userRepository.findById(id)
+                .map(User::getProfilePicture)
+                .orElse("");
+        return ResponseEntity.ok(Map.of("profilePicture", picture != null ? picture : ""));
+    }
+
+    @GetMapping("/psychologists/search")
+    public ResponseEntity<List<User>> searchPsychologists(@RequestParam String query) {
+        List<User> results = userRepository.findByRoleAndFullNameContainingIgnoreCase("PSYCHOLOGIST", query);
+        return ResponseEntity.ok(results);
+    }
+
+    @PostMapping("/me/psychologist/{psychologistId}")
+    public ResponseEntity<?> choosePsychologist(@PathVariable Long psychologistId, @RequestParam Long clientId) {
+        User client = userRepository.findById(clientId).orElseThrow();
+        User psych = userRepository.findById(psychologistId).orElseThrow();
+        if (!"PSYCHOLOGIST".equals(psych.getRole())) return ResponseEntity.badRequest().body("Not a psychologist");
+        client.setPsychologist(psych);
+        userRepository.save(client);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/me/psychologist")
+    public ResponseEntity<?> removePsychologist(@RequestParam Long clientId) {
+        User client = userRepository.findById(clientId).orElseThrow();
+        client.setPsychologist(null);
+        userRepository.save(client);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/psychologists")
     public ResponseEntity<List<User>> getPsychologists() {
         List<User> psychologists = userRepository.findAllByRole("PSYCHOLOGIST");
         return ResponseEntity.ok(psychologists);
+    }
+
+    @GetMapping("/unassigned")
+    public ResponseEntity<List<User>> getUnassignedClients() {
+        return ResponseEntity.ok(userRepository.findByRoleAndPsychologistIsNull("CLIENT"));
     }
 
     @GetMapping("/{id}")

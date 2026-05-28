@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 export default function DiaryHome() {
     const [entries, setEntries] = useState([]);
@@ -16,7 +17,7 @@ export default function DiaryHome() {
 
     const fetchEntries = async () => {
         try {
-            const res = await fetch(`/api/diary/user/${user.id}`);
+            const res = await fetch(API_URL(`/api/diary/user/${user.id}`));
             if (res.ok) {
                 const data = await res.json();
                 const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -29,7 +30,7 @@ export default function DiaryHome() {
         e.preventDefault();
         if (!newText.trim()) return;
 
-        const res = await fetch('/api/diary', {
+        const res = await fetch(API_URL('/api/diary'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: user.id, text: newText })
@@ -52,7 +53,7 @@ export default function DiaryHome() {
     };
 
     const handleUpdate = async (id) => {
-        const res = await fetch(`/api/diary/${id}`, {
+        const res = await fetch(API_URL(`/api/diary/${id}`), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: editText })
@@ -66,7 +67,7 @@ export default function DiaryHome() {
     };
 
     const handleDelete = async (id) => {
-        const res = await fetch(`/api/diary/${id}`, { method: 'DELETE' });
+        const res = await fetch(API_URL(`/api/diary/${id}`), { method: 'DELETE' });
 
         if (res.ok) {
             if (editingId === id) setEditingId(null);

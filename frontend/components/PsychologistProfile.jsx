@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 const PsychologistProfile = () => {
     const [user, setUser] = useState({});
     const [isEditing, setIsEditing] = useState(false);
+    const [avatarSrc, setAvatarSrc] = useState(null);
     const fileInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
@@ -14,41 +16,89 @@ const PsychologistProfile = () => {
 
     useEffect(() => {
         const stored = JSON.parse(localStorage.getItem('user') || '{}');
-        setUser(stored);
-        setFormData({
-            fullName: stored.fullName || '',
-            specialization: stored.specialization || '',
-            experience: stored.experience || '',
-            aboutMe: stored.aboutMe || '',
-            phone: stored.phone || '',
-            certificateUrls: stored.certificateUrls || '',
-            socialLinks: stored.socialLinks || ''
-        });
+        fetchUser(stored.id);
     }, []);
 
-    const handleFileChange = async (e) => {
+    const fetchUser = async (id) => {
+        try {
+            const res = await fetch(API_URL(`/api/users/${id}`));
+            if (res.ok) {
+                const data = await res.json();
+                setUser(data);
+                setFormData({
+                    fullName: data.fullName || '',
+                    specialization: data.specialization || '',
+                    experience: data.experience || '',
+                    aboutMe: data.aboutMe || '',
+                    phone: data.phone || '',
+                    certificateUrls: data.certificateUrls || '',
+                    socialLinks: data.socialLinks || ''
+                });
+                setAvatarSrc(data.profilePicture);
+            }
+        } catch (err) { console.error(err); }
+    };
+
+    const resizeImage = (file, maxW, maxH) => {
+        return new Promise(resolve => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85);
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+        });
+    };
+      
+    const toBase64 = (blob) => {
+        return new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
+        });
+    };
+
+    const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const data = new FormData();
-        data.append('file', file);
 
-        const toastId = toast.loading("Загрузка фото...");
+        const toastId = toast.loading("Обработка фото...");
         try {
-            const res = await fetch(`/api/users/${user.id}/avatar`, { method: 'POST', body: data });
+            const resized = await resizeImage(file, 300, 300);
+            const base64 = await toBase64(resized);
+
+            const res = await fetch(API_URL(`/api/users/${user.id}/profile-picture`), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profilePicture: base64 })
+            });
+
             if (res.ok) {
-                const updated = await res.json();
+                setAvatarSrc(base64);
+                // Update local storage user object
+                const updated = { ...user, profilePicture: base64 };
                 localStorage.setItem('user', JSON.stringify(updated));
-                setUser(updated);
                 toast.success("Фото обновлено!", { id: toastId });
+            } else {
+                toast.error("Ошибка сохранения", { id: toastId });
             }
-        } catch (e) { toast.error("Ошибка", { id: toastId }); }
+        } catch (error) {
+            console.error(error);
+            toast.error("Ошибка сервера", { id: toastId });
+        }
     };
 
     const handleSave = async () => {
         const toastId = toast.loading("Saving...");
 
         try {
-            const res = await fetch(`/api/users/${user.id}`, {
+            const res = await fetch(API_URL(`/api/users/${user.id}`), {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(formData)
@@ -61,15 +111,6 @@ const PsychologistProfile = () => {
             const savedUser = await res.json();
             localStorage.setItem('user', JSON.stringify(savedUser));
             setUser(savedUser);
-            setFormData({
-                fullName: savedUser.fullName || '',
-                specialization: savedUser.specialization || '',
-                experience: savedUser.experience || '',
-                aboutMe: savedUser.aboutMe || '',
-                phone: savedUser.phone || '',
-                certificateUrls: savedUser.certificateUrls || '',
-                socialLinks: savedUser.socialLinks || ''
-            });
             setIsEditing(false);
             toast.success("Profile saved", { id: toastId });
         } catch (error) {
@@ -98,13 +139,23 @@ const PsychologistProfile = () => {
             <div className="card" style={{ padding: 0 }}>
                 <div className="profile-banner" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%)' }}></div>
                 <div style={{ padding: '0 var(--space-lg) var(--space-lg)' }}>
-                    <div className="profile-avatar-large" onClick={() => fileInputRef.current.click()} style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' }}>
-                        {user.photoUrl ? (
-                            <img src={`${import.meta.env.VITE_API_BASE_URL || ''}${user.photoUrl}`} alt="Avatar" />
-                        ) : (
-                            <span>{(user.fullName || "П").charAt(0)}</span>
-                        )}
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/*" />
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <div className="profile-avatar-large" style={{ background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' }}>
+                            {avatarSrc ? (
+                                <img src={avatarSrc} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <span>{(user.fullName || user.username || "П").charAt(0)}</span>
+                            )}
+                        </div>
+                        <label htmlFor="avatar-upload-psych" style={{
+                            position: 'absolute', bottom: 0, right: 0,
+                            width: 24, height: 24, borderRadius: '50%',
+                            background: 'var(--accent-primary)', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 12, border: '2px solid var(--bg-base)', zIndex: 2
+                        }}>📷</label>
+                        <input id="avatar-upload-psych" type="file" accept="image/*"
+                            style={{ display: 'none' }} onChange={handleAvatarChange} />
                     </div>
 
                     <div style={{ marginTop: 'var(--space-md)' }}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 export default function DreamAnalysis() {
     const [dreams, setDreams] = useState([]);
@@ -16,7 +17,7 @@ export default function DreamAnalysis() {
 
     const fetchDreams = async () => {
         try {
-            const res = await fetch(`/api/dreams/user/${user.id}`);
+            const res = await fetch(API_URL(`/api/dreams/user/${user.id}`));
             if (res.ok) {
                 const data = await res.json();
                 const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -29,7 +30,7 @@ export default function DreamAnalysis() {
         e.preventDefault();
         if (!newDream.trim()) return;
 
-        const res = await fetch('/api/dreams', {
+        const res = await fetch(API_URL('/api/dreams'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: user.id, text: newDream })
@@ -52,7 +53,7 @@ export default function DreamAnalysis() {
     };
 
     const handleUpdate = async (id) => {
-        const res = await fetch(`/api/dreams/${id}`, {
+        const res = await fetch(API_URL(`/api/dreams/${id}`), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content: editContent })
@@ -66,7 +67,7 @@ export default function DreamAnalysis() {
     };
 
     const handleDelete = async (id) => {
-        const res = await fetch(`/api/dreams/${id}`, { method: 'DELETE' });
+        const res = await fetch(API_URL(`/api/dreams/${id}`), { method: 'DELETE' });
         if (res.ok) {
             fetchDreams();
             toast.success("Сон удален");

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import API_URL from '../src/api';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -38,9 +39,11 @@ const Sidebar = () => {
 
             <Link to="/profile" className="sidebar-user">
                 <div className="user-avatar">
-                    {user.photoUrl ? (
+                    {user.profilePicture ? (
+                        <img src={user.profilePicture} alt="User" />
+                    ) : user.photoUrl ? (
                         <img
-                            src={`${import.meta.env.VITE_API_BASE_URL || ''}${user.photoUrl}`}
+                            src={API_URL(user.photoUrl)}
                             alt="User"
                             onError={(e) => { e.target.style.display = 'none'; }}
                         />

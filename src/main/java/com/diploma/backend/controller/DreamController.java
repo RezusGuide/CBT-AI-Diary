@@ -29,12 +29,12 @@ public class DreamController {
 
     @GetMapping
     public List<DreamEntry> getDreams(@RequestParam Long userId) {
-        return dreamRepository.findTop3ByUserIdOrderByCreatedAtDesc(userId);
+        return dreamRepository.findTop3ByUser_IdOrderByCreatedAtDesc(userId);
     }
 
     @GetMapping("/all")
     public List<DreamEntry> getHistory(@RequestParam Long userId) {
-        return dreamRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
+        return dreamRepository.findAllByUser_IdOrderByCreatedAtDesc(userId);
     }
 
     @PostMapping
@@ -64,7 +64,7 @@ public class DreamController {
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<DreamEntry>> getUserDreams(@PathVariable Long userId) {
-        return ResponseEntity.ok(dreamRepository.findByUserId(userId));
+        return ResponseEntity.ok(dreamRepository.findByUser_Id(userId));
     }
 
     @PutMapping("/{id}")

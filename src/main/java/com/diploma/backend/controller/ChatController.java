@@ -1,10 +1,8 @@
 package com.diploma.backend.controller;
 
-import com.diploma.backend.Entity.Chat;
 import com.diploma.backend.Entity.ChatMessage;
 import com.diploma.backend.Entity.User;
 import com.diploma.backend.repository.ChatMessageRepository;
-import com.diploma.backend.repository.ChatRepository;
 import com.diploma.backend.repository.UserRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -13,80 +11,71 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatController {
 
-    private final ChatRepository chatRepository;
     private final UserRepository userRepository;
-    private final ChatMessageRepository chatMessageRepository; // ДОБАВИЛИ РЕПОЗИТОРИЙ
+    private final ChatMessageRepository chatMessageRepository;
 
-    // 1. ПОЛУЧИТЬ ВСЕ ЧАТЫ ПОЛЬЗОВАТЕЛЯ
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Chat>> getUserChats(@PathVariable Long userId) {
-        return ResponseEntity.ok(chatRepository.findByParticipantId(userId));
+    // Get conversation history between two users
+    @GetMapping("/messages/{partnerId}")
+    public ResponseEntity<List<ChatMessage>> getMessages(
+            @PathVariable Long partnerId,
+            @RequestParam Long userId) {
+        List<ChatMessage> messages = chatMessageRepository
+            .findBySenderIdAndReceiverIdOrSenderIdAndReceiverIdOrderBySentAtAsc(
+                userId, partnerId, partnerId, userId
+            );
+        return ResponseEntity.ok(messages);
     }
 
-    // 2. СОЗДАТЬ ЧАТ
-    @PostMapping("/create")
-    public ResponseEntity<Chat> createChat(@RequestParam Long userId, @RequestParam Long targetId) {
-        Optional<Chat> existingChat = chatRepository.findExistingChat(userId, targetId);
-        if (existingChat.isPresent()) {
-            return ResponseEntity.ok(existingChat.get());
+    // Send a message
+    @PostMapping("/messages/{receiverId}")
+    public ResponseEntity<ChatMessage> sendMessage(
+            @PathVariable Long receiverId,
+            @RequestParam Long senderId,
+            @RequestBody Map<String, String> body) {
+        
+        User sender = userRepository.findById(senderId).orElseThrow();
+        User receiver = userRepository.findById(receiverId).orElseThrow();
+        
+        if (!canChat(sender, receiver)) {
+            return ResponseEntity.status(403).build();
         }
-
-        User user1 = userRepository.findById(userId).orElseThrow();
-        User user2 = userRepository.findById(targetId).orElseThrow();
-
-        Chat chat = new Chat();
-        chat.setParticipant1(user1);
-        chat.setParticipant2(user2);
-        chat.setLastMessage("Чат создан");
-        chat.setLastMessageTime(LocalDateTime.now());
-
-        chatRepository.save(chat);
-        return ResponseEntity.ok(chat);
+        
+        ChatMessage msg = new ChatMessage();
+        msg.setSender(sender);
+        msg.setReceiver(receiver);
+        msg.setContent(body.get("content"));
+        msg.setSentAt(LocalDateTime.now());
+        
+        return ResponseEntity.ok(chatMessageRepository.save(msg));
     }
 
-    // --- НОВЫЕ МЕТОДЫ (ИСПРАВЛЯЮТ ОШИБКУ 404) ---
-
-    // 3. ОТПРАВИТЬ СООБЩЕНИЕ
-    @PostMapping("/message")
-    public ResponseEntity<ChatMessage> sendMessage(@RequestBody MessageRequest request) {
-        Chat chat = chatRepository.findById(request.getChatId())
-                .orElseThrow(() -> new RuntimeException("Чат не найден"));
-
-        // Создаем сообщение
-        ChatMessage message = new ChatMessage();
-        message.setChat(chat);
-        message.setSenderId(request.getSenderId());
-        message.setContent(request.getContent());
-        message.setTimestamp(LocalDateTime.now());
-
-        chatMessageRepository.save(message);
-
-        // Обновляем "последнее сообщение" в самом чате (чтобы в списке было видно)
-        chat.setLastMessage(request.getContent());
-        chat.setLastMessageTime(LocalDateTime.now());
-        chatRepository.save(chat);
-
-        return ResponseEntity.ok(message);
+    // Get the chat partner for a CLIENT (their psychologist)
+    // or list of clients for a PSYCHOLOGIST
+    @GetMapping("/partner")
+    public ResponseEntity<?> getChatPartner(@RequestParam Long userId) {
+        User me = userRepository.findById(userId).orElseThrow();
+        if ("CLIENT".equals(me.getRole())) {
+            if (me.getPsychologist() == null) return ResponseEntity.ok(Map.of("partner", null));
+            return ResponseEntity.ok(Map.of("partner", me.getPsychologist()));
+        } else {
+            return ResponseEntity.ok(Map.of("clients", me.getClients()));
+        }
     }
 
-    // 4. ПОЛУЧИТЬ ИСТОРИЮ СООБЩЕНИЙ
-    @GetMapping("/{chatId}/messages")
-    public ResponseEntity<List<ChatMessage>> getChatMessages(@PathVariable Long chatId) {
-        return ResponseEntity.ok(chatMessageRepository.findByChatId(chatId));
-    }
-
-    // Вспомогательный класс для приема данных (DTO)
-    @Data
-    public static class MessageRequest {
-        private Long chatId;
-        private Long senderId;
-        private String content;
+    private boolean canChat(User a, User b) {
+        // client->psychologist or psychologist->client
+        if ("CLIENT".equals(a.getRole()) && "PSYCHOLOGIST".equals(b.getRole()))
+            return b.equals(a.getPsychologist());
+        if ("PSYCHOLOGIST".equals(a.getRole()) && "CLIENT".equals(b.getRole()))
+            return a.equals(b.getPsychologist());
+        return false;
     }
 }

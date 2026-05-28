@@ -11,4 +11,6 @@ public interface DiaryEntryRepository extends JpaRepository<DiaryEntry, Long> {
 
     // 2. Для вывода всех записей с сортировкой по дате
     List<DiaryEntry> findAllByUser_IdOrderByCreatedAtDesc(Long userId);
+
+    long countByUser_Id(Long userId);
 }

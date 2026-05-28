@@ -20,8 +20,7 @@ public class GamificationController {
     public ResponseEntity<?> getInnerWorldStatus(@PathVariable Long userId) {
         try {
             // Считаем количество записей в дневнике у этого пользователя
-            // (В будущем можно считать уникальные дни, но для начала просто количество записей)
-            long entriesCount = diaryRepository.findByUser_Id(userId).size();
+            long entriesCount = diaryRepository.countByUser_Id(userId);
 
             int requiredDays = 5;
             boolean isUnlocked = entriesCount >= requiredDays;
@@ -43,7 +42,6 @@ public class GamificationController {
 
             int moodScore = 5; // По умолчанию нейтральное
 
-            // Простая конвертация настроения в баллы (для погоды в игре)
             if (currentMood != null && !currentMood.isEmpty()) {
                 switch(currentMood) {
                     case "joy": case "happy": case "excited": moodScore = 8; break;
@@ -53,7 +51,6 @@ public class GamificationController {
                 }
             }
 
-            // Чем хуже настроение, тем больше сорняков появляется (от 0 до 7)
             int weedsCount = Math.max(0, 10 - moodScore);
 
             return ResponseEntity.ok(Map.of(

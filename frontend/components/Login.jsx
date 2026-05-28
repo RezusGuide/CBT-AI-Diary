@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -17,7 +18,7 @@ const Login = () => {
         e.preventDefault();
 
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch(API_URL('/api/auth/login'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

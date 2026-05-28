@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PsychologistCalendar from './PsychologistCalendar';
+import API_URL from '../src/api';
 
 export default function PsychologistHome() {
     const [clients, setClients] = useState([]);
@@ -8,7 +9,7 @@ export default function PsychologistHome() {
 
     useEffect(() => {
         if (user.id) {
-            fetch(`/api/psychologist/clients/my?psychologistId=${user.id}`)
+            fetch(API_URL(`/api/psychologist/clients/my?psychologistId=${user.id}`))
                 .then(res => res.ok ? res.json() : [])
                 .then(data => setClients(data.slice(0, 5)));
         }

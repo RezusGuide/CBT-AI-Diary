@@ -6,6 +6,6 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public interface MoodEntryRepository extends JpaRepository<MoodEntry, Long> {
-    Optional<MoodEntry> findByUserIdAndDate(Long userId, LocalDate date);
-    java.util.List<MoodEntry> findByUserIdOrderByDateDesc(Long userId);
+    Optional<MoodEntry> findByUser_IdAndDate(Long userId, LocalDate date);
+    java.util.List<MoodEntry> findByUser_IdOrderByDateDesc(Long userId);
 }

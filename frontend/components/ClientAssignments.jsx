@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 export default function ClientAssignments() {
     const [assignments, setAssignments] = useState([]);
@@ -12,12 +13,12 @@ export default function ClientAssignments() {
     }, [user.id]);
 
     const fetchAssignments = () => {
-        fetch(`/api/assignments/client/${user.id}`).then(res => res.json()).then(data => setAssignments(data));
+        fetch(API_URL(`/api/assignments/client/${user.id}`)).then(res => res.json()).then(data => setAssignments(data));
     };
 
     const handleComplete = (id) => {
         if (!answer.trim()) return toast.error("Пожалуйста, напишите ваш ответ");
-        fetch(`/api/assignments/${id}/complete`, {
+        fetch(API_URL(`/api/assignments/${id}/complete`), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ answer })

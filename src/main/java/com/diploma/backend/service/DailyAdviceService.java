@@ -34,12 +34,12 @@ public class DailyAdviceService {
                 .stream()
                 .limit(5)
                 .toList();
-        List<MoodEntry> recentMoods = moodRepository.findByUserIdOrderByDateDesc(userId)
+        List<MoodEntry> recentMoods = moodRepository.findByUser_IdOrderByDateDesc(userId)
                 .stream()
                 .limit(7)
                 .toList();
 
-        String todayMood = moodRepository.findByUserIdAndDate(userId, LocalDate.now())
+        String todayMood = moodRepository.findByUser_IdAndDate(userId, LocalDate.now())
                 .map(MoodEntry::getMood)
                 .orElse("");
 

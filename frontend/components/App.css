@@ -417,6 +417,17 @@ a {
   background: rgba(139, 92, 246, 0.06);
 }
 
+/* Force OS-level option elements to be readable */
+select.input-field {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-2);
+}
+
+select.input-field option {
+  background-color: #1a1825;   /* matches --bg-surface */
+  color: #f0eeff;              /* matches --text-primary */
+}
+
 .input-label {
   display: block;
   font-size: 11px;

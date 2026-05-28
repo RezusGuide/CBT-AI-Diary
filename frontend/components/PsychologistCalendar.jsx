@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 export default function PsychologistCalendar() {
     const [date, setDate] = useState(new Date());
@@ -16,7 +17,7 @@ export default function PsychologistCalendar() {
     }, [psychId]);
 
     const fetchEvents = async () => {
-        const res = await fetch(`/api/psychologist-tools/events?psychologistId=${psychId}`);
+        const res = await fetch(API_URL(`/api/psychologist-tools/events?psychologistId=${psychId}`));
         if (res.ok) setEvents(await res.json());
     };
 
@@ -26,7 +27,7 @@ export default function PsychologistCalendar() {
         const localDate = new Date(date.getTime() - (offset * 60 * 1000));
         const dateString = localDate.toISOString().split('T')[0];
 
-        const res = await fetch('/api/psychologist-tools/events', {
+        const res = await fetch(API_URL('/api/psychologist-tools/events'), {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -46,7 +47,7 @@ export default function PsychologistCalendar() {
     };
 
     const handleDelete = async (id) => {
-        await fetch(`/api/psychologist-tools/events/${id}`, { method: 'DELETE' });
+        await fetch(API_URL(`/api/psychologist-tools/events/${id}`), { method: 'DELETE' });
         fetchEvents();
     };
 

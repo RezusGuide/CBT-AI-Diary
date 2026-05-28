@@ -28,7 +28,7 @@ public class AiSummaryService {
 
         // 1. Собираем данные за последние 7-10 дней
         List<DiaryEntry> recentDiaries = diaryRepository.findByUser_Id(clientId); // В идеале ограничить по дате
-        List<MoodEntry> recentMoods = moodRepository.findByUserIdOrderByDateDesc(clientId);
+        List<MoodEntry> recentMoods = moodRepository.findByUser_IdOrderByDateDesc(clientId);
 
         String diaryContext = recentDiaries.stream()
                 .limit(10) // Последние 10 записей

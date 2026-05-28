@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import API_URL from '../src/api';
 
 const PsychologistSidebar = () => {
     const location = useLocation();
@@ -25,8 +26,10 @@ const PsychologistSidebar = () => {
 
             <Link to="/psychologist/profile" className="sidebar-user">
                 <div className="user-avatar" style={{ background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' }}>
-                    {user.photoUrl ? (
-                        <img src={`${import.meta.env.VITE_API_BASE_URL || ''}${user.photoUrl}`} alt="User" />
+                    {user.profilePicture ? (
+                        <img src={user.profilePicture} alt="User" />
+                    ) : user.photoUrl ? (
+                        <img src={API_URL(user.photoUrl)} alt="User" />
                     ) : (
                         <span>{displayName.charAt(0).toUpperCase()}</span>
                     )}

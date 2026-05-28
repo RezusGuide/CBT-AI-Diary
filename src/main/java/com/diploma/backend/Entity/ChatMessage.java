@@ -12,18 +12,16 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // К какому чату относится сообщение
     @ManyToOne
-    @JoinColumn(name = "chat_id")
-    private Chat chat;
+    @JoinColumn(name = "sender_id")
+    private User sender;
 
-    // Кто отправил (User ID)
-    @Column(name = "sender_id")
-    private Long senderId;
+    @ManyToOne
+    @JoinColumn(name = "receiver_id")
+    private User receiver;
 
-    // Текст сообщения
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    private LocalDateTime timestamp;
+    private LocalDateTime sentAt = LocalDateTime.now();
 }

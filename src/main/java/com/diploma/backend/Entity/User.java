@@ -42,11 +42,19 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String photoUrl;
 
+    @Column(columnDefinition = "TEXT")
+    private String profilePicture; // Base64 encoded image
+
     private String currentTheme;
 
     @ManyToOne
     @JoinColumn(name = "psychologist_id")
-    @JsonIgnoreProperties({"password", "certificateUrls", "photoUrl", "aboutMe"}) // Не тянем лишние данные психолога вложенно
+    @JsonIgnoreProperties({"password", "certificateUrls", "photoUrl", "aboutMe", "clients"}) // Не тянем лишние данные психолога вложенно
     private User psychologist;
+
+    @OneToMany(mappedBy = "psychologist")
+    @JsonIgnoreProperties({"psychologist", "password"})
+    private java.util.List<User> clients = new java.util.ArrayList<>();
+
     private java.time.LocalDate subscriptionEndsAt;
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 const moodToScore = (mood) => {
     const scores = { "Депрессивно": 1, "Подавлено": 2, "Грустно": 3, "Раздраженно": 4, "Удовлетворённо": 6, "Радостно": 8, "Счастливо": 9, "Восторженно": 10 };
@@ -26,7 +27,7 @@ export default function ClientDetails() {
         let isMounted = true;
 
         const fetchJson = async (url) => {
-            const response = await fetch(url);
+            const response = await fetch(API_URL(url));
             if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
             return response.json();
         };
@@ -76,7 +77,7 @@ export default function ClientDetails() {
     const handleGenerateSummary = async () => {
         setGeneratingSummary(true);
         try {
-            const res = await fetch(`/api/psychologist/client/${id}/summary`);
+            const res = await fetch(API_URL(`/api/psychologist/client/${id}/summary`));
             if (res.ok) {
                 const text = await res.text();
                 setAiSummary(text);

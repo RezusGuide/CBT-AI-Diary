@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../src/api';
 
 const MOOD_OPTIONS = [
     { key: 'happy', label: 'Радостно', emoji: '🌟' },
@@ -13,8 +14,19 @@ const MOOD_OPTIONS = [
 export default function ClientHome() {
     const navigate = useNavigate();
     const [user] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
-    const [moodSelected, setMoodSelected] = useState(false);
-    const [stats, setStats] = useState({ diary: 0, dreams: 0, tasks: 0, aiAdvice: 0 });
+    
+    // BUG 4 FIX: Initialize mood state synchronously from localStorage to avoid flash
+    const TODAY = new Date().toISOString().split('T')[0];
+    const MOOD_KEY = `mood_${user.id}_${TODAY}`;
+    
+    const [selectedMood, setSelectedMood] = useState(() => {
+        return localStorage.getItem(MOOD_KEY);
+    });
+    const [moodSelected, setMoodSelected] = useState(() => {
+        return localStorage.getItem(MOOD_KEY) !== null;
+    });
+
+    const [stats, setStats] = useState({ diaryCount: 0, sleepCount: 0, taskCount: 0, adviceCount: 0 });
 
     useEffect(() => {
         if (user.id) {
@@ -25,33 +37,36 @@ export default function ClientHome() {
 
     const checkTodayMood = async () => {
         try {
-            const res = await fetch(`/api/mood/today/${user.id}`);
+            const res = await fetch(API_URL(`/api/mood/today/${user.id}`));
             if (res.ok) {
                 const data = await res.json();
-                if (data.mood && data.mood !== "") setMoodSelected(true);
+                if (data.mood && data.mood !== "") {
+                    localStorage.setItem(MOOD_KEY, data.mood);
+                    setSelectedMood(data.mood);
+                    setMoodSelected(true);
+                }
             }
         } catch (e) { console.error(e); }
     };
 
     const fetchStats = async () => {
-        // Placeholder for stats fetching
-        // In a real app, we would fetch these from the backend
-        setStats({
-            diary: 12,
-            dreams: 5,
-            tasks: 3,
-            aiAdvice: 8
-        });
+        try {
+            const res = await fetch(API_URL(`/api/dashboard/stats?userId=${user.id}`));
+            if (res.ok) {
+                setStats(await res.json());
+            }
+        } catch (e) { console.error(e); }
     };
 
     const handleMoodClick = async (moodKey) => {
         try {
-            await fetch(`/api/mood/${user.id}`, {
+            await fetch(API_URL(`/api/mood/${user.id}`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ mood: moodKey })
             });
-            localStorage.setItem(`mood_${user.id}_${new Date().toDateString()}`, moodKey);
+            localStorage.setItem(MOOD_KEY, moodKey);
+            setSelectedMood(moodKey);
             setMoodSelected(true);
             toast.success("Настроение сохранено ✨");
         } catch (e) { toast.error("Ошибка сети"); }
@@ -74,28 +89,47 @@ export default function ClientHome() {
         );
     }
 
+    const currentMoodObj = MOOD_OPTIONS.find(m => m.key === selectedMood);
+
     return (
         <div>
-            <header style={{ marginBottom: 'var(--space-xl)' }}>
-                <h1>Добрый день, {user.fullName || user.username} 👋</h1>
-                <p style={{ color: 'var(--text-muted)' }}>Сегодня {new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <header style={{ marginBottom: 'var(--space-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                    <h1>Добрый день, {user.fullName || user.username} 👋</h1>
+                    <p style={{ color: 'var(--text-muted)' }}>Сегодня {new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                </div>
+                {currentMoodObj && (
+                    <div className="card" style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '24px' }}>{currentMoodObj.emoji}</span>
+                        <div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ваше состояние</div>
+                            <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{currentMoodObj.label}</div>
+                        </div>
+                        <button 
+                            onClick={() => setMoodSelected(false)}
+                            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', marginLeft: '10px' }}
+                        >
+                            Изменить
+                        </button>
+                    </div>
+                )}
             </header>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: 'var(--space-xl)' }}>
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-diary)' }}>{stats.diary}</div>
+                    <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-diary)' }}>{stats.diaryCount}</div>
                     <div className="input-label" style={{ marginBottom: 0 }}>Записей</div>
                 </div>
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-dreams)' }}>{stats.dreams}</div>
+                    <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-dreams)' }}>{stats.sleepCount}</div>
                     <div className="input-label" style={{ marginBottom: 0 }}>Снов</div>
                 </div>
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-tasks)' }}>{stats.tasks}</div>
+                    <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-tasks)' }}>{stats.taskCount}</div>
                     <div className="input-label" style={{ marginBottom: 0 }}>Заданий</div>
                 </div>
                 <div className="card" style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-ai)' }}>{stats.aiAdvice}</div>
+                    <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-ai)' }}>{stats.adviceCount}</div>
                     <div className="input-label" style={{ marginBottom: 0 }}>Советов</div>
                 </div>
             </div>

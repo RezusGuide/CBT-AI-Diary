@@ -47,5 +47,12 @@ uploads/
 ### Local development database ###
 data/
 
+### Environment Variables ###
+.env
+.env.local
+frontend/.env
+frontend/.env.local
+
+
 ### Browser test profiles ###
 .tmp-chrome-profile/

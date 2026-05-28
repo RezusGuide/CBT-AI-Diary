@@ -44,7 +44,7 @@ public class MoodController {
         userRepository.save(user);
 
         // Также сохраняем в историю (MoodEntry)
-        MoodEntry entry = moodRepository.findByUserIdAndDate(userId, LocalDate.now())
+        MoodEntry entry = moodRepository.findByUser_IdAndDate(userId, LocalDate.now())
                 .orElse(new MoodEntry());
         
         entry.setUser(user);

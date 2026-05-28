@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import API_URL from '../api';
 
 // ==========================================
 // ВРЕМЕННЫЕ АССЕТЫ (КАРТИНКИ), ВШИТЫЕ В КОД
@@ -52,7 +53,7 @@ export default class MainScene extends Phaser.Scene {
         });
 
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        fetch(`/api/gamification/world-state/${user.id}`)
+        fetch(API_URL(`/api/gamification/world-state/${user.id}`))
             .then(res => res.json())
             .then(state => this.buildWorld(state))
             .catch(e => this.buildWorld({ moodScore: 5, weedsCount: 3 }));

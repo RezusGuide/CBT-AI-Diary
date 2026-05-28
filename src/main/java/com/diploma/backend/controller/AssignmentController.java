@@ -41,30 +41,27 @@ public class AssignmentController {
     // Клиент получает свои задания
     @GetMapping("/client/{id}")
     public List<Assignment> getForClient(@PathVariable Long id) {
-        return assignmentRepository.findByClientIdOrderByCreatedAtDesc(id);
+        return assignmentRepository.findByClient_IdOrderByCreatedAtDesc(id);
     }
 
     @GetMapping("/psychologist/{id}")
     public List<Assignment> getForPsychologist(@PathVariable Long id) {
-        return assignmentRepository.findByPsychologistIdOrderByCreatedAtDesc(id);
+        return assignmentRepository.findByPsychologist_IdOrderByCreatedAtDesc(id);
     }
 
     // Клиент отвечает на задание
-    @PutMapping("/{id}/complete")
-    public Assignment complete(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<Assignment> complete(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         Assignment a = assignmentRepository.findById(id).orElseThrow();
         a.setClientAnswer(payload.get("answer"));
         a.setCompleted(true);
-        return assignmentRepository.save(a);
+        return ResponseEntity.ok(assignmentRepository.save(a));
     }
-    // Добавь это внутрь AssignmentController.java
 
     // ПОЛУЧИТЬ ЗАДАНИЯ КЛИЕНТА
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Assignment>> getClientAssignments(@PathVariable Long userId) {
-        // Убедись, что в AssignmentRepository есть метод findByClientId(Long clientId)
-        // Имя метода зависит от того, как у тебя называется поле связи с клиентом в сущности Assignment
-        return ResponseEntity.ok(assignmentRepository.findByClientId(userId));
+        return ResponseEntity.ok(assignmentRepository.findByClient_Id(userId));
     }
 
     // ОБНОВИТЬ (РЕДАКТИРОВАТЬ) ЗАДАНИЕ
@@ -74,7 +71,6 @@ public class AssignmentController {
             Assignment assignment = assignmentRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Задание не найдено"));
 
-            // Обновляем только заголовок и описание
             assignment.setTitle(payload.get("title"));
             assignment.setDescription(payload.get("description"));
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import API_URL from '../src/api';
 
 export default function DailyAdvice() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -14,7 +15,7 @@ export default function DailyAdvice() {
     const fetchAdvice = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/ai-advice/daily/${user.id}`);
+            const res = await fetch(API_URL(`/api/ai-advice/daily/${user.id}`));
             if (!res.ok) {
                 toast.error('Could not generate advice');
                 return;

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/psychologist-tools/notes")
+@RequestMapping("/api/notes")
 @RequiredArgsConstructor
 public class PsychologistNoteController {
 
