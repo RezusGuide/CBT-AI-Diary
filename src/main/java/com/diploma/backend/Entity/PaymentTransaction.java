@@ -11,12 +11,12 @@ public class PaymentTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;            // Кто платил
-    private Double amount;          // Сколько (2000.00)
-    private String status;          // PENDING, SUCCESS, FAILED
-    private String provider;        // KASPI, FREEDOM
+    private Long userId;            
+    private Double amount;          
+    private String status;          
+    private String provider;        
 
-    // Внутренний ID заказа, который мы шлем в банк
+    
     private String orderId;
 
     private LocalDateTime createdAt = LocalDateTime.now();

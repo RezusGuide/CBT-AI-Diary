@@ -1,28 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import API_URL from '../src/api';
+import api from '../src/api/axiosInstance';
+import { useLanguage } from '../src/i18n/LanguageContext';
+import { aiApi } from '../src/api/aiApi';
 
 export default function DiaryHome() {
+    const { t } = useLanguage();
     const [entries, setEntries] = useState([]);
     const [newText, setNewText] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [editText, setEditText] = useState('');
     const [showForm, setShowForm] = useState(false);
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const [analysisResults, setAnalysisResults] = useState({});
+    const [analyzingIds, setAnalyzingIds] = useState({});
+
+    const userId = localStorage.getItem('userId');
 
     useEffect(() => {
-        if (user.id) fetchEntries();
-    }, [user.id]);
+        if (userId) fetchEntries();
+    }, [userId]);
+
+    const handleAnalyze = async (id, content) => {
+        setAnalyzingIds(prev => ({ ...prev, [id]: true }));
+        try {
+            const result = await aiApi.analyzeDiary(content);
+            setAnalysisResults(prev => ({ ...prev, [id]: result }));
+        } catch {
+            toast.error(t('ai_analysis_error'));
+        } finally {
+            setAnalyzingIds(prev => ({ ...prev, [id]: false }));
+        }
+    };
 
     const fetchEntries = async () => {
         try {
-            const res = await fetch(API_URL(`/api/diary/user/${user.id}`));
-            if (res.ok) {
-                const data = await res.json();
-                const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                setEntries(sorted);
-            }
+            const res = await api.get(`/api/diary/user/${userId}`);
+            const data = res.data;
+            const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setEntries(sorted);
         } catch (e) { console.error(e); }
     };
 
@@ -30,20 +46,14 @@ export default function DiaryHome() {
         e.preventDefault();
         if (!newText.trim()) return;
 
-        const res = await fetch(API_URL('/api/diary'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id, text: newText })
-        });
-
-        if (res.ok) {
+        try {
+            await api.post('/api/diary', { userId, text: newText });
             setNewText('');
             setShowForm(false);
             fetchEntries();
-            toast.success("Запись сохранена!");
-        } else {
-            const errorText = await res.text();
-            toast.error(errorText || "Ошибка сохранения");
+            toast.success(t('diary_toast_saved'));
+        } catch (error) {
+            toast.error(error.response?.data || t('diary_toast_save_error'));
         }
     };
 
@@ -53,28 +63,22 @@ export default function DiaryHome() {
     };
 
     const handleUpdate = async (id) => {
-        const res = await fetch(API_URL(`/api/diary/${id}`), {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: editText })
-        });
-
-        if (res.ok) {
+        try {
+            await api.put(`/api/diary/${id}`, { text: editText });
             setEditingId(null);
             fetchEntries();
-            toast.success("Запись дополнена");
-        }
+            toast.success(t('diary_toast_updated'));
+        } catch (e) { console.error(e); }
     };
 
     const handleDelete = async (id) => {
-        const res = await fetch(API_URL(`/api/diary/${id}`), { method: 'DELETE' });
-
-        if (res.ok) {
+        try {
+            await api.delete(`/api/diary/${id}`);
             if (editingId === id) setEditingId(null);
             fetchEntries();
-            toast.success("Запись удалена");
-        } else {
-            toast.error("Не удалось удалить запись");
+            toast.success(t('diary_toast_deleted'));
+        } catch (e) {
+            toast.error(t('diary_toast_delete_error'));
         }
     };
 
@@ -82,29 +86,29 @@ export default function DiaryHome() {
     const hasTodayEntry = entries.some(entry => new Date(entry.createdAt).toLocaleDateString() === todayStr);
 
     return (
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
-                <h1>Мой Дневник</h1>
+        <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
+                <h1>{t('diary_my_diary')}</h1>
                 {!hasTodayEntry && !showForm && (
-                    <button className="btn-primary" onClick={() => setShowForm(true)}>Новая запись</button>
+                    <button className="btn-primary" onClick={() => setShowForm(true)}>{t('diary_new')}</button>
                 )}
             </div>
 
             {showForm && (
                 <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
-                    <h3 className="card-header">Главная мысль дня</h3>
+                    <h3 className="card-header">{t('diary_main_thought')}</h3>
                     <form onSubmit={handleCreate}>
                         <textarea
                             className="input-field"
-                            placeholder="Опишите свои чувства и события за сегодня..."
+                            placeholder={t('diary_placeholder')}
                             value={newText}
                             onChange={(e) => setNewText(e.target.value)}
                             style={{ height: '120px', marginBottom: 'var(--space-md)', resize: 'none' }}
                             required
                         />
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button type="submit" className="btn-primary" style={{ flex: 1 }}>Сохранить запись</button>
-                            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Отмена</button>
+                        <div className="btn-row">
+                            <button type="submit" className="btn-primary" style={{ flex: 1 }}>{t('diary_save_btn')}</button>
+                            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>{t('cancel')}</button>
                         </div>
                     </form>
                 </div>
@@ -115,14 +119,14 @@ export default function DiaryHome() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '20px' }}>✅</span>
                         <div>
-                            <h3 style={{ margin: 0, color: 'var(--color-world)' }}>Запись на сегодня создана</h3>
-                            <p style={{ margin: 0, fontSize: '0.9rem' }}>Вы можете дополнить её или отредактировать в списке ниже.</p>
+                            <h3 style={{ margin: 0, color: 'var(--color-world)' }}>{t('diary_today_created')}</h3>
+                            <p style={{ margin: 0, fontSize: '0.9rem' }}>{t('diary_today_hint')}</p>
                         </div>
                     </div>
                 </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <div className="cards-grid" style={{ gridTemplateColumns: '1fr' }}>
                 {entries.length === 0 && !showForm && (
                     <div style={{ 
                         height: '200px', 
@@ -133,10 +137,11 @@ export default function DiaryHome() {
                         background: 'var(--bg-surface-2)',
                         border: '2px dashed var(--border-medium)',
                         borderRadius: 'var(--radius-xl)',
-                        color: 'var(--text-muted)'
+                        color: 'var(--text-muted)',
+                        gridColumn: '1 / -1'
                     }}>
                         <div style={{ fontSize: '40px', marginBottom: 'var(--space-sm)' }}>📖</div>
-                        <p>Здесь пока нет записей. Самое время начать!</p>
+                        <p>{t('diary_empty_hint')}</p>
                     </div>
                 )}
 
@@ -147,7 +152,7 @@ export default function DiaryHome() {
                                 <span className="badge badge-violet">{new Date(entry.createdAt).toLocaleDateString()}</span>
                                 <span style={{ fontSize: '18px' }}>✨</span>
                             </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                            <div className="btn-row" style={{ gap: '8px' }}>
                                 <button onClick={() => startEdit(entry)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>✏️</button>
                                 <button onClick={() => handleDelete(entry.id)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px', color: '#f87171' }}>🗑️</button>
                             </div>
@@ -161,14 +166,14 @@ export default function DiaryHome() {
                                     onChange={(e) => setEditText(e.target.value)}
                                     style={{ height: '150px', marginBottom: 'var(--space-md)', resize: 'none' }}
                                 />
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button onClick={() => handleUpdate(entry.id)} className="btn-primary">Сохранить</button>
-                                    <button onClick={() => setEditingId(null)} className="btn-secondary">Отмена</button>
+                                <div className="btn-row">
+                                    <button onClick={() => handleUpdate(entry.id)} className="btn-primary">{t('save')}</button>
+                                    <button onClick={() => setEditingId(null)} className="btn-secondary">{t('cancel')}</button>
                                 </div>
                             </div>
                         ) : (
                             <>
-                                <h3 style={{ marginBottom: 'var(--space-sm)' }}>Запись от {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</h3>
+                                <h3 style={{ marginBottom: 'var(--space-sm)' }}>{t('diary_entry_at')} {new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</h3>
                                 <p style={{ 
                                     color: 'var(--text-secondary)', 
                                     whiteSpace: 'pre-wrap',
@@ -181,12 +186,49 @@ export default function DiaryHome() {
                                     {entry.text || entry.content}
                                 </p>
                                 <div className="divider" style={{ margin: 'var(--space-sm) 0' }}></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
                                     <div style={{ display: 'flex', gap: '6px' }}>
-                                        <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>#дневник</span>
-                                        <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>#осознанность</span>
+                                        <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>#diary</span>
+                                        <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>#mindfulness</span>
                                     </div>
-                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>~2 мин чтения</span>
+                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('diary_reading_time')}</span>
+                                </div>
+
+                                <div style={{ marginTop: 'var(--space-md)' }}>
+                                    <button 
+                                        className="btn-secondary" 
+                                        style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                        onClick={() => handleAnalyze(entry.id, entry.text || entry.content)}
+                                        disabled={analyzingIds[entry.id]}
+                                    >
+                                        {analyzingIds[entry.id] ? t('loading') : `✨ ${t('ai_analyze_entry')}`}
+                                    </button>
+                                    
+                                    {analysisResults[entry.id] && (
+                                        <div style={{
+                                            marginTop: 'var(--space-sm)',
+                                            background: 'rgba(139, 92, 246, 0.08)',
+                                            border: '1px solid rgba(139, 92, 246, 0.2)',
+                                            borderRadius: 'var(--radius-md)',
+                                            padding: 'var(--space-md)',
+                                            fontSize: '13px',
+                                            lineHeight: '1.6',
+                                            color: 'var(--text-secondary)',
+                                            whiteSpace: 'pre-wrap'
+                                        }}>
+                                            <div style={{ 
+                                                fontSize: '11px', 
+                                                fontWeight: '700', 
+                                                color: 'var(--text-accent)',
+                                                marginBottom: '6px', 
+                                                textTransform: 'uppercase', 
+                                                letterSpacing: '0.08em' 
+                                            }}>
+                                                ✨ AI Анализ
+                                            </div>
+                                            {analysisResults[entry.id]}
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         )}

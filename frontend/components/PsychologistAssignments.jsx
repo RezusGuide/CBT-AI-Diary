@@ -1,86 +1,102 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import API_URL from '../src/api';
+import api from '../src/api/axiosInstance';
+import { useLanguage } from '../src/i18n/LanguageContext';
 
 export default function PsychologistAssignments() {
+    const { t } = useLanguage();
     const [assignments, setAssignments] = useState([]);
     const [clients, setClients] = useState([]);
     const [isCreating, setIsCreating] = useState(false);
     const [formData, setFormData] = useState({ title: '', description: '', clientId: '' });
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = localStorage.getItem('userId');
 
     useEffect(() => {
-        fetchAssignments();
-        fetchClients();
-    }, []);
+        if (userId) {
+            fetchAssignments();
+            fetchClients();
+        }
+    }, [userId]);
 
-    const fetchAssignments = () => {
-        fetch(API_URL(`/api/assignments/psychologist/${user.id}`)).then(res => res.json()).then(data => setAssignments(data));
+    const fetchAssignments = async () => {
+        try {
+            const res = await api.get(`/api/assignments/psychologist/${userId}`);
+            setAssignments(res.data);
+        } catch (e) {
+            console.error('Error fetching assignments:', e);
+        }
     };
 
-    const fetchClients = () => {
-        fetch(API_URL(`/api/psychologist/clients/my?psychologistId=${user.id}`)).then(res => res.json()).then(data => setClients(data));
+    const fetchClients = async () => {
+        try {
+            const res = await api.get(`/api/psychologist/clients/my?psychologistId=${userId}`);
+            setClients(res.data);
+        } catch (e) {
+            console.error('Error fetching clients:', e);
+        }
     };
 
-    const handleCreate = (e) => {
+    const handleCreate = async (e) => {
         e.preventDefault();
-        fetch(API_URL('/api/assignments'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...formData, psychologistId: user.id })
-        }).then(() => {
+        try {
+            await api.post('/api/assignments', { ...formData, psychologistId: userId });
             setIsCreating(false);
             setFormData({ title: '', description: '', clientId: '' });
             fetchAssignments();
-            toast.success("Задание успешно назначено 🎯");
-        });
+            toast.success(t('assignments_success_toast'));
+        } catch (e) {
+            console.error('Error creating assignment:', e);
+            toast.error(t('error_generic'));
+        }
     };
 
     return (
-        <div>
-            <header style={{ marginBottom: 'var(--space-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="fade-in">
+            <header style={{ marginBottom: 'var(--space-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div>
-                    <h1>Программа терапии</h1>
-                    <p style={{ color: 'var(--text-muted)' }}>Назначение и контроль выполнения заданий</p>
+                    <h1>{t('assignments_program')}</h1>
+                    <p style={{ color: 'var(--text-muted)' }}>{t('assignments_control')}</p>
                 </div>
-                <button className="btn-primary" onClick={() => setIsCreating(true)}>+ Назначить задание</button>
+                <button className="btn-primary" onClick={() => setIsCreating(true)}>{t('assignments_new')}</button>
             </header>
 
             {isCreating && (
-                <div className="card" style={{ marginBottom: 'var(--space-xl)', background: 'var(--bg-surface-2)' }}>
-                    <h3 className="card-header">Новое задание</h3>
-                    <form onSubmit={handleCreate}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
-                            <div>
-                                <label className="input-label">Название</label>
-                                <input className="input-field" placeholder="Напр. Техника 5-4-3-2-1" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                <div className="modal-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-card" style={{ width: '100%', maxWidth: '600px' }}>
+                        <h3 className="card-header">{t('assignments_create_title')}</h3>
+                        <form onSubmit={handleCreate} style={{ padding: 'var(--space-lg)' }}>
+                            <div className="two-col-layout" style={{ marginBottom: 'var(--space-md)' }}>
+                                <div>
+                                    <label className="input-label">{t('profile_title')}</label>
+                                    <input className="input-field" placeholder={t('assignments_title_ph')} value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                                </div>
+                                <div>
+                                    <label className="input-label">{t('chat_client')}</label>
+                                    <select className="input-field" value={formData.clientId} onChange={e => setFormData({...formData, clientId: e.target.value})} required style={{ cursor: 'pointer' }}>
+                                        <option value="">{t('assignments_client_placeholder')}</option>
+                                        {clients.map(c => <option key={c.id} value={c.id}>{c.fullName || c.username}</option>)}
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label className="input-label">Получатель</label>
-                                <select className="input-field" value={formData.clientId} onChange={e => setFormData({...formData, clientId: e.target.value})} required style={{ cursor: 'pointer' }}>
-                                    <option value="">Выберите клиента...</option>
-                                    {clients.map(c => <option key={c.id} value={c.id}>{c.fullName || c.username}</option>)}
-                                </select>
+                            <div style={{ marginBottom: 'var(--space-lg)' }}>
+                                <label className="input-label">{t('assignments_instructions_label')}</label>
+                                <textarea className="input-field" placeholder={t('assignments_instructions_ph')} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ height: '120px', resize: 'none' }} required />
                             </div>
-                        </div>
-                        <div style={{ marginBottom: 'var(--space-lg)' }}>
-                            <label className="input-label">Инструкции</label>
-                            <textarea className="input-field" placeholder="Опишите инструкции для клиента..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ height: '120px', resize: 'none' }} required />
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button type="submit" className="btn-primary">Отправить клиенту</button>
-                            <button type="button" className="btn-secondary" onClick={() => setIsCreating(false)}>Отмена</button>
-                        </div>
-                    </form>
+                            <div className="btn-row">
+                                <button type="submit" className="btn-primary">{t('assignments_send')}</button>
+                                <button type="button" className="btn-secondary" onClick={() => setIsCreating(false)}>{t('notes_cancel')}</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <div className="cards-grid">
                 {assignments.map(item => (
                     <div key={item.id} className="card">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
                             <span className={`badge ${item.isCompleted ? 'badge-emerald' : 'badge-amber'}`}>
-                                {item.isCompleted ? 'Выполнено' : 'В процессе'}
+                                {item.isCompleted ? t('tasks_done') : t('assignments_status_in_progress')}
                             </span>
                             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(item.createdAt).toLocaleDateString()}</span>
                         </div>
@@ -89,7 +105,7 @@ export default function PsychologistAssignments() {
                         
                         {item.clientAnswer && (
                             <div style={{ background: 'var(--bg-surface-2)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--color-tasks)' }}>
-                                <div className="input-label" style={{ color: 'var(--color-tasks)', marginBottom: '8px' }}>ОТВЕТ КЛИЕНТА:</div>
+                                <div className="input-label" style={{ color: 'var(--color-tasks)', marginBottom: '8px' }}>{t('assignments_client_answer')}</div>
                                 <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '14px', fontStyle: 'italic' }}>{item.clientAnswer}</p>
                             </div>
                         )}
@@ -97,9 +113,9 @@ export default function PsychologistAssignments() {
                 ))}
                 
                 {assignments.length === 0 && !isCreating && (
-                    <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)', border: '1px dashed var(--border-subtle)' }}>
+                    <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 'var(--space-2xl)', border: '1px dashed var(--border-subtle)' }}>
                         <div style={{ fontSize: '40px', marginBottom: 'var(--space-sm)' }}>🎯</div>
-                        <p style={{ color: 'var(--text-muted)' }}>Назначенных заданий пока нет.</p>
+                        <p style={{ color: 'var(--text-muted)' }}>{t('assignments_empty')}</p>
                     </div>
                 )}
             </div>

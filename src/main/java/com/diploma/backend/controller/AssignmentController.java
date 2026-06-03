@@ -16,7 +16,7 @@ public class AssignmentController {
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
 
-    // Психолог создает задание
+    
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> payload) {
         try {
@@ -38,7 +38,7 @@ public class AssignmentController {
         }
     }
 
-    // Клиент получает свои задания
+    
     @GetMapping("/client/{id}")
     public List<Assignment> getForClient(@PathVariable Long id) {
         return assignmentRepository.findByClient_IdOrderByCreatedAtDesc(id);
@@ -49,7 +49,7 @@ public class AssignmentController {
         return assignmentRepository.findByPsychologist_IdOrderByCreatedAtDesc(id);
     }
 
-    // Клиент отвечает на задание
+    
     @PostMapping("/{id}/complete")
     public ResponseEntity<Assignment> complete(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         Assignment a = assignmentRepository.findById(id).orElseThrow();
@@ -58,13 +58,13 @@ public class AssignmentController {
         return ResponseEntity.ok(assignmentRepository.save(a));
     }
 
-    // ПОЛУЧИТЬ ЗАДАНИЯ КЛИЕНТА
+    
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Assignment>> getClientAssignments(@PathVariable Long userId) {
         return ResponseEntity.ok(assignmentRepository.findByClient_Id(userId));
     }
 
-    // ОБНОВИТЬ (РЕДАКТИРОВАТЬ) ЗАДАНИЕ
+    
     @PutMapping("/{id}")
     public ResponseEntity<?> updateAssignment(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         try {
@@ -80,7 +80,7 @@ public class AssignmentController {
         }
     }
 
-    // УДАЛИТЬ ЗАДАНИЕ
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteAssignment(@PathVariable Long id) {
         try {

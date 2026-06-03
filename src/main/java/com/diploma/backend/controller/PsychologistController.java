@@ -37,7 +37,7 @@ public class PsychologistController {
         }
     }
 
-    // Добавим метод, чтобы клиент мог получить список ВСЕХ психологов для выбора
+    
     @GetMapping("/list")
     public List<User> getAllPsychologists() {
         return userRepository.findByRole("PSYCHOLOGIST");
@@ -45,7 +45,7 @@ public class PsychologistController {
 
     @GetMapping("/client/{clientId}/mood-history")
     public List<Map<String, String>> getClientMoodHistory(@PathVariable Long clientId) {
-        // Берем все записи
+        
         List<MoodEntry> moods = moodRepository.findAll().stream()
                 .filter(m -> m.getUser().getId().equals(clientId))
                 .sorted((a, b) -> a.getDate().compareTo(b.getDate()))

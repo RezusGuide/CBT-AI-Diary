@@ -26,7 +26,7 @@ public class User {
     private java.time.LocalDate lastMoodDate;
 
 
-    // Новые поля для психолога
+    
     private String specialization;
     private Integer experience;
 
@@ -36,20 +36,20 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String socialLinks;
 
-    @Column(length = 1000) // О себе
+    @Column(length = 1000) 
     private String aboutMe;
 
     @Column(columnDefinition = "TEXT")
     private String photoUrl;
 
     @Column(columnDefinition = "TEXT")
-    private String profilePicture; // Base64 encoded image
+    private String profilePicture; 
 
     private String currentTheme;
 
     @ManyToOne
     @JoinColumn(name = "psychologist_id")
-    @JsonIgnoreProperties({"password", "certificateUrls", "photoUrl", "aboutMe", "clients"}) // Не тянем лишние данные психолога вложенно
+    @JsonIgnoreProperties({"password", "certificateUrls", "photoUrl", "aboutMe", "clients"}) 
     private User psychologist;
 
     @OneToMany(mappedBy = "psychologist")
@@ -57,4 +57,14 @@ public class User {
     private java.util.List<User> clients = new java.util.ArrayList<>();
 
     private java.time.LocalDate subscriptionEndsAt;
+
+    private boolean twoFactorEnabled = false;
+
+    @Column(name = "otp_code")
+    private String otpCode;
+
+
+
+    @Column(name = "otp_expiry")
+    private java.time.LocalDateTime otpExpiry;
 }

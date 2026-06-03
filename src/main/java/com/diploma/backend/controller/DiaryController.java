@@ -34,16 +34,16 @@ public class DiaryController {
         return ResponseEntity.ok(diaryRepository.findByUser_Id(userId));
     }
 
-    // 1. СОЗДАНИЕ (с защитой от спама)
+    
     @PostMapping
     public ResponseEntity<?> createDiaryEntry(@RequestBody Map<String, Object> payload) {
         try {
             Long userId = Long.valueOf(payload.get("userId").toString());
 
-            // Используем правильный метод
+            
             var entries = diaryRepository.findByUser_Id(userId);
 
-            // Проверяем, есть ли среди них запись за СЕГОДНЯ
+            
             java.time.LocalDate today = java.time.LocalDate.now();
             boolean hasTodayEntry = entries.stream()
                     .anyMatch(e -> e.getCreatedAt().toLocalDate().equals(today));
@@ -52,12 +52,12 @@ public class DiaryController {
                 return ResponseEntity.badRequest().body("Вы уже сделали основную запись сегодня. Вы можете только дополнить её.");
             }
 
-            // Достаем самого юзера из базы
+            
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
             DiaryEntry entry = new DiaryEntry();
-            entry.setUser(user); // Передаем ЦЕЛОГО юзера, а не просто ID
+            entry.setUser(user); 
             entry.setText((String) payload.get("text"));
 
             return ResponseEntity.ok(diaryRepository.save(entry));
@@ -66,7 +66,7 @@ public class DiaryController {
         }
     }
 
-    // ОБНОВИТЬ ЗАПИСЬ В ДНЕВНИКЕ
+    
     @PutMapping("/{id}")
     public ResponseEntity<?> updateDiaryEntry(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         try {

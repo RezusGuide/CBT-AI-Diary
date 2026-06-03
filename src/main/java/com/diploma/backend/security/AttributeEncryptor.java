@@ -14,7 +14,7 @@ import java.util.Base64;
 public class AttributeEncryptor implements AttributeConverter<String, String> {
 
     private static final String ALGORITHM = "AES";
-    // КЛЮЧ ДОЛЖЕН БЫТЬ 16 СИМВОЛОВ (128 bit)
+    
     private static final byte[] KEY = "MySuperSecretKey".getBytes();
 
     @Override
@@ -39,7 +39,7 @@ public class AttributeEncryptor implements AttributeConverter<String, String> {
             cipher.init(Cipher.DECRYPT_MODE, key);
             return new String(cipher.doFinal(Base64.getDecoder().decode(dbData)));
         } catch (Exception e) {
-            // Если данные в базе старые (не зашифрованные), вернем как есть, чтобы не упало
+            
             return dbData;
         }
     }

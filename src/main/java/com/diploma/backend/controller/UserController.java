@@ -39,7 +39,7 @@ public class UserController {
             user.setPhotoUrl(fileUrl);
             userRepository.save(user);
 
-            return ResponseEntity.ok(user); // Возвращаем обновленного юзера
+            return ResponseEntity.ok(user); 
 
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("Ошибка загрузки файла");

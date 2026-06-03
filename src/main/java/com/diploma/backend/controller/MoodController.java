@@ -19,21 +19,21 @@ public class MoodController {
     private final UserRepository userRepository;
     private final MoodEntryRepository moodRepository;
 
-    // ПОЛУЧИТЬ НАСТРОЕНИЕ НА СЕГОДНЯ
+    
     @GetMapping("/today/{userId}")
     public ResponseEntity<?> getTodayMood(@PathVariable Long userId) {
         User user = userRepository.findById(userId).orElseThrow();
 
-        // Если настроение было установлено сегодня - возвращаем его
+        
         if (user.getLastMoodDate() != null && user.getLastMoodDate().equals(LocalDate.now())) {
             return ResponseEntity.ok(Map.of("mood", user.getTodayMood()));
         }
 
-        // Иначе возвращаем пустоту
+        
         return ResponseEntity.ok(Map.of("mood", ""));
     }
 
-    // СОХРАНИТЬ НАСТРОЕНИЕ
+    
     @PostMapping("/{userId}")
     public ResponseEntity<?> saveMood(@PathVariable Long userId, @RequestBody Map<String, String> payload) {
         User user = userRepository.findById(userId).orElseThrow();
@@ -43,7 +43,7 @@ public class MoodController {
         user.setLastMoodDate(LocalDate.now());
         userRepository.save(user);
 
-        // Также сохраняем в историю (MoodEntry)
+        
         MoodEntry entry = moodRepository.findByUser_IdAndDate(userId, LocalDate.now())
                 .orElse(new MoodEntry());
         

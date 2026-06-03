@@ -19,7 +19,7 @@ public class GamificationController {
     @GetMapping("/status/{userId}")
     public ResponseEntity<?> getInnerWorldStatus(@PathVariable Long userId) {
         try {
-            // Считаем количество записей в дневнике у этого пользователя
+            
             long entriesCount = diaryRepository.countByUser_Id(userId);
 
             int requiredDays = 5;
@@ -40,7 +40,7 @@ public class GamificationController {
             User user = userRepository.findById(userId).orElseThrow();
             String currentMood = user.getTodayMood();
 
-            int moodScore = 5; // По умолчанию нейтральное
+            int moodScore = 5; 
 
             if (currentMood != null && !currentMood.isEmpty()) {
                 switch(currentMood) {

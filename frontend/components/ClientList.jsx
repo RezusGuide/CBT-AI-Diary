@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import API_URL from '../src/api';
+import api from '../src/api/axiosInstance';
 import toast from 'react-hot-toast';
+import { useLanguage } from '../src/i18n/LanguageContext';
 
 export default function ClientList() {
+    const { t } = useLanguage();
     const [clients, setClients] = useState([]);
     const [unassigned, setUnassigned] = useState([]);
     const [search, setSearch] = useState('');
-    const [activeTab, setActiveTab] = useState('active'); // 'active' or 'discover'
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const [activeTab, setActiveTab] = useState('active'); 
+    const userId = localStorage.getItem('userId');
 
     useEffect(() => {
         if (activeTab === 'active') {
@@ -16,44 +18,39 @@ export default function ClientList() {
         } else {
             fetchUnassigned();
         }
-    }, [activeTab, search, user.id]);
+    }, [activeTab, search, userId]);
 
     const fetchActiveClients = () => {
-        const psychId = user.id;
-        const url = `/api/psychologist/clients/my?psychologistId=${psychId}${search ? `&search=${search}` : ''}`;
-        fetch(API_URL(url)).then(res => res.ok ? res.json() : []).then(data => setClients(data));
+        const url = `/api/psychologist/clients/my?psychologistId=${userId}${search ? `&search=${search}` : ''}`;
+        api.get(url).then(res => setClients(res.data)).catch(() => setClients([]));
     };
 
     const fetchUnassigned = () => {
-        fetch(API_URL('/api/users/unassigned'))
-            .then(res => res.json())
-            .then(data => {
+        api.get('/api/users/unassigned')
+            .then(res => {
+                const data = res.data;
                 const filtered = search 
                     ? data.filter(c => (c.fullName || c.username).toLowerCase().includes(search.toLowerCase()))
                     : data;
                 setUnassigned(filtered);
-            });
+            }).catch(() => setUnassigned([]));
     };
 
     const handleConnect = async (clientId) => {
         try {
-            const res = await fetch(API_URL(`/api/users/me/psychologist/${user.id}?clientId=${clientId}`), {
-                method: 'POST'
-            });
-            if (res.ok) {
-                toast.success("Клиент добавлен в вашу базу");
-                fetchUnassigned();
-            }
+            await api.post(`/api/users/me/psychologist/${userId}?clientId=${clientId}`);
+            toast.success(t('clients_connected_toast'));
+            fetchUnassigned();
         } catch (err) { console.error(err); }
     };
 
     const displayList = activeTab === 'active' ? clients : unassigned;
 
     return (
-        <div>
-            <header style={{ marginBottom: 'var(--space-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="fade-in">
+            <header style={{ marginBottom: 'var(--space-xl)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div>
-                    <h1>Мои Клиенты</h1>
+                    <h1>{t('clients_title')}</h1>
                     <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
                         <button 
                             onClick={() => setActiveTab('active')}
@@ -64,7 +61,7 @@ export default function ClientList() {
                                 fontWeight: activeTab === 'active' ? '600' : '400', fontSize: '14px'
                             }}
                         >
-                            Активные сессии ({clients.length})
+                            {t('clients_current')} ({clients.length})
                         </button>
                         <button 
                             onClick={() => setActiveTab('discover')}
@@ -75,22 +72,22 @@ export default function ClientList() {
                                 fontWeight: activeTab === 'discover' ? '600' : '400', fontSize: '14px'
                             }}
                         >
-                            Новые заявки
+                            {t('clients_pending')}
                         </button>
                     </div>
                 </div>
-                <div style={{ width: '300px' }}>
+                <div style={{ minWidth: '250px', flex: '1', maxWidth: '400px' }}>
                     <input 
                         className="input-field"
                         type="text" 
-                        placeholder="🔍 Поиск по имени..." 
+                        placeholder={t('profile_search_ph')} 
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
             </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 'var(--space-lg)' }}>
+            <div className="cards-grid">
                 {displayList.map(item => (
                     <div key={item.id} className="card">
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
@@ -116,11 +113,11 @@ export default function ClientList() {
 
                         <div style={{ marginBottom: 'var(--space-md)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: 'var(--space-sm)' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Email:</span>
+                                <span style={{ color: 'var(--text-muted)' }}>{t('profile_email')}:</span>
                                 <span style={{ color: 'var(--text-secondary)' }}>{item.email || '—'}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Телефон:</span>
+                                <span style={{ color: 'var(--text-muted)' }}>{t('profile_phone')}:</span>
                                 <span style={{ color: 'var(--text-secondary)' }}>{item.phone || '—'}</span>
                             </div>
                         </div>
@@ -131,7 +128,7 @@ export default function ClientList() {
                                 className="btn-primary" 
                                 style={{ width: '100%', justifyContent: 'center' }}
                             >
-                                Открыть карту
+                                {t('clients_open_card')}
                             </Link>
                         ) : (
                             <button 
@@ -139,7 +136,7 @@ export default function ClientList() {
                                 className="btn-primary" 
                                 style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #34d399, #10b981)' }}
                             >
-                                Принять в работу
+                                {t('clients_connect')}
                             </button>
                         )}
                     </div>
@@ -150,7 +147,7 @@ export default function ClientList() {
                         <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.2 }}>
                             {activeTab === 'active' ? '👥' : '✨'}
                         </div>
-                        <p>{activeTab === 'active' ? 'У вас пока нет прикрепленных клиентов.' : 'Новых заявок пока нет.'}</p>
+                        <p>{activeTab === 'active' ? t('clients_empty') : t('clients_pending_empty')}</p>
                     </div>
                 )}
             </div>

@@ -1,13 +1,13 @@
 export const DEFAULT_THEME = {
     id: 'neutral',
     colors: {
-        primary: '#6C63FF',      // Royal Purple
+        primary: '#6C63FF',      
         primaryLight: '#8F88FF',
-        secondary: '#F5F3FF',    // Lavender Background
-        accent: '#FFF8E7',       // Warm Cream
+        secondary: '#F5F3FF',    
+        accent: '#FFF8E7',       
         background: '#F5F3FF',
         surface: '#FFFFFF',
-        text: '#2D3748',         // Slate Gray for readability
+        text: '#2D3748',         
         muted: '#718096'
     },
     shadows: {

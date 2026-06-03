@@ -1,26 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import API_URL from '../src/api';
+import api from '../src/api/axiosInstance';
+import { useLanguage } from '../src/i18n/LanguageContext';
 
 const Chat = () => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const [partner, setPartner] = useState(null);       // for CLIENT: their psychologist
-    const [clientList, setClientList] = useState([]);   // for PSYCHOLOGIST: their clients
-    const [activeClient, setActiveClient] = useState(null); // PSYCHOLOGIST selects a client
+    const { t } = useLanguage();
+    const userId = localStorage.getItem('userId');
+    const userRole = localStorage.getItem('userRole');
+    const [partner, setPartner] = useState(null);       
+    const [clientList, setClientList] = useState([]);   
+    const [activeClient, setActiveClient] = useState(null); 
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(true);
     const messagesEndRef = useRef(null);
 
-    const chatPartnerId = user.role === 'CLIENT'
+    const chatPartnerId = userRole === 'CLIENT'
       ? partner?.id
       : activeClient?.id;
 
-    // Load partner info
+    
     useEffect(() => {
-      fetch(API_URL(`/api/chat/partner?userId=${user.id}`))
-        .then(res => res.json())
-        .then(data => {
-          if (user.role === 'CLIENT') {
+      if (!userId) return;
+      api.get(`/api/chat/partner?userId=${userId}`)
+        .then(res => {
+          const data = res.data;
+          if (userRole === 'CLIENT') {
             setPartner(data.partner);
           } else {
             setClientList(data.clients || []);
@@ -31,98 +35,93 @@ const Chat = () => {
           console.error(err);
           setLoading(false);
         });
-    }, [user.id, user.role]);
+    }, [userId, userRole]);
 
-    // Load messages when chat partner changes
+    
     useEffect(() => {
-      if (!chatPartnerId) {
+      if (!chatPartnerId || !userId) {
         setMessages([]);
         return;
       }
       
       const fetchHistory = () => {
-        fetch(API_URL(`/api/chat/messages/${chatPartnerId}?userId=${user.id}`))
-          .then(res => res.json())
-          .then(data => setMessages(data))
+        api.get(`/api/chat/messages/${chatPartnerId}?userId=${userId}`)
+          .then(res => setMessages(res.data))
           .catch(err => console.error(err));
       };
 
       fetchHistory();
       const poll = setInterval(fetchHistory, 3000);
       return () => clearInterval(poll);
-    }, [chatPartnerId, user.id]);
+    }, [chatPartnerId, userId]);
 
-    // Scroll to bottom on new messages
+    
     useEffect(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
     const sendMessage = async (e) => {
       if (e) e.preventDefault();
-      if (!input.trim() || !chatPartnerId) return;
+      if (!input.trim() || !chatPartnerId || !userId) return;
       
       const content = input.trim();
       setInput('');
       
-      // Optimistic update
+      
       const tempId = Date.now();
       setMessages(prev => [...prev, {
         id: tempId, 
         content,
-        sender: { id: user.id },
+        sender: { id: userId },
         sentAt: new Date().toISOString()
       }]);
 
       try {
-        await fetch(API_URL(`/api/chat/messages/${chatPartnerId}?senderId=${user.id}`), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content })
-        });
+        await api.post(`/api/chat/messages/${chatPartnerId}?senderId=${userId}`, { content });
       } catch (err) {
         console.error('Send failed:', err);
       }
     };
 
-    if (loading) return <div style={{ color: 'var(--text-muted)', padding: 32 }}>Загрузка...</div>;
+    if (loading) return <div style={{ color: 'var(--text-muted)', padding: 32 }}>{t('loading')}</div>;
 
-    // CLIENT with no psychologist
-    if (user.role === 'CLIENT' && !partner) {
+    
+    if (userRole === 'CLIENT' && !partner) {
       return (
-        <div className="card" style={{ textAlign: 'center', padding: 48, margin: '0 auto', maxWidth: '600px' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>💬</div>
-          <h2>Чат недоступен</h2>
+        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)', margin: '0 auto', maxWidth: '600px' }}>
+          <div style={{ fontSize: 40, marginBottom: 'var(--space-md)' }}>💬</div>
+          <h2>{t('chat_no_psych')}</h2>
           <p style={{ color: 'var(--text-muted)' }}>
-            Сначала выберите психолога в разделе «Профиль», чтобы начать общение.
+            {t('chat_no_psych_hint')}
           </p>
         </div>
       );
     }
 
-    // PSYCHOLOGIST with no clients
-    if (user.role === 'PSYCHOLOGIST' && clientList.length === 0) {
+    
+    if (userRole === 'PSYCHOLOGIST' && clientList.length === 0) {
       return (
-        <div className="card" style={{ textAlign: 'center', padding: 48, margin: '0 auto', maxWidth: '600px' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>💬</div>
-          <h2>Нет активных клиентов</h2>
+        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)', margin: '0 auto', maxWidth: '600px' }}>
+          <div style={{ fontSize: 40, marginBottom: 'var(--space-md)' }}>💬</div>
+          <h2>{t('chat_no_clients')}</h2>
           <p style={{ color: 'var(--text-muted)' }}>
-            Когда клиент выберет вас своим психологом, он появится здесь.
+            {t('chat_no_clients_hint')}
           </p>
         </div>
       );
     }
 
-    const currentPartner = user.role === 'CLIENT' ? partner : activeClient;
+    const currentPartner = userRole === 'CLIENT' ? partner : activeClient;
 
     return (
-      <div style={{ display: 'flex', gap: 16, height: 'calc(100vh - 120px)' }}>
+      <div className="chat-layout" style={{ display: 'flex', gap: 'var(--space-md)', height: 'calc(100vh - 120px)', flexWrap: 'wrap' }}>
 
-        {/* PSYCHOLOGIST: client selector sidebar */}
-        {user.role === 'PSYCHOLOGIST' && (
-          <div className="card" style={{ width: 240, flexShrink: 0, padding: '12px 0', overflowY: 'auto' }}>
+        {}
+        {userRole === 'PSYCHOLOGIST' && (
+          <div className="card chat-sidebar" style={{ width: 240, flexShrink: 0, padding: '12px 0', overflowY: 'auto' }}>
             <div style={{ padding: '0 12px 8px', fontSize: 11, fontWeight: 600,
                           color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Мои Клиенты
+              {t('chat_clients')}
             </div>
             {clientList.map(client => (
               <div
@@ -154,11 +153,11 @@ const Chat = () => {
           </div>
         )}
 
-        {/* Chat window */}
-        <div className="chat-container" style={{ flex: 1 }}>
-          {/* Header */}
-          <div className="chat-header">
-            {/* Avatar */}
+        {}
+        <div className="chat-container card" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden', minWidth: '300px' }}>
+          {}
+          <div className="chat-header" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            {}
             <div style={{ position: 'relative' }}>
               {currentPartner?.profilePicture
                 ? <img src={currentPartner.profilePicture}
@@ -183,30 +182,30 @@ const Chat = () => {
                 {currentPartner?.fullName || currentPartner?.username}
               </div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                {user.role === 'CLIENT' ? 'Психолог' : 'Клиент'}
+                {userRole === 'CLIENT' ? t('chat_psychologist') : t('chat_client')}
               </div>
             </div>
           </div>
 
-          {/* Messages */}
+          {}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px',
                         display: 'flex', flexDirection: 'column', gap: 4 }}>
             {messages.length === 0 && (
               <div style={{ textAlign: 'center', color: 'var(--text-muted)',
                             fontSize: 13, marginTop: 32 }}>
-                Начните разговор 👋
+                {t('chat_start')}
               </div>
             )}
             {messages.map(msg => {
-              const isMe = msg.sender?.id === user.id || msg.sender === user.id;
+              const isMe = msg.sender?.id === userId || msg.sender === userId;
               return (
                 <div key={msg.id} style={{ display: 'flex', flexDirection: 'column',
                                            alignItems: isMe ? 'flex-end' : 'flex-start' }}>
                   <div className={isMe ? 'message message-user' : 'message message-ai'}>
                     {msg.content}
                   </div>
-                  <div className="message-time">
-                    {new Date(msg.sentAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                  <div className="message-time" style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, marginBottom: 8 }}>
+                    {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
               );
@@ -214,16 +213,17 @@ const Chat = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <div className="chat-input-area">
+          {}
+          <div className="chat-input-area" style={{ padding: '16px 20px', borderTop: '1px solid var(--border-subtle)' }}>
             <form onSubmit={sendMessage} style={{ display: 'flex', width: '100%', gap: '10px' }}>
                 <input
-                className="chat-input"
+                className="input-field"
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder="Напишите сообщение..."
+                placeholder={t('chat_placeholder')}
+                style={{ flex: 1, borderRadius: 'var(--radius-full)', padding: '10px 20px' }}
                 />
-                <button type="submit" className="chat-send-btn">➤</button>
+                <button type="submit" className="btn-primary" style={{ borderRadius: '50%', width: 42, height: 42, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>➤</button>
             </form>
           </div>
         </div>

@@ -12,12 +12,12 @@ public class Assignment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;       // Заголовок (например "Дневник эмоций")
+    private String title;       
     @Column(columnDefinition = "TEXT")
-    private String description; // Описание задания
+    private String description; 
 
     @Column(columnDefinition = "TEXT")
-    private String clientAnswer; // Ответ клиента
+    private String clientAnswer; 
 
     private boolean completed = false;
     private LocalDateTime createdAt = LocalDateTime.now();

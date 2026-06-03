@@ -4,34 +4,71 @@ import com.diploma.backend.Entity.DiaryEntry;
 import com.diploma.backend.Entity.MoodEntry;
 import com.diploma.backend.repository.DiaryEntryRepository;
 import com.diploma.backend.repository.MoodEntryRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.SystemMessage;
-import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class AiSummaryService {
 
-    private final ChatClient.Builder chatClientBuilder;
+    private final CbtAiService cbtAiService;
     private final DiaryEntryRepository diaryRepository;
     private final MoodEntryRepository moodRepository;
 
-    public String generateClientSummary(Long clientId) {
-        ChatClient chatClient = chatClientBuilder.build();
+    public AiSummaryService(CbtAiService cbtAiService, 
+                            DiaryEntryRepository diaryRepository,
+                            MoodEntryRepository moodRepository) {
+        this.cbtAiService = cbtAiService;
+        this.diaryRepository = diaryRepository;
+        this.moodRepository = moodRepository;
+    }
 
-        // 1. Собираем данные за последние 7-10 дней
-        List<DiaryEntry> recentDiaries = diaryRepository.findByUser_Id(clientId); // В идеале ограничить по дате
+    public String analyzeDiaryEntry(DiaryEntry entry) {
+        if (entry.getText() == null || entry.getText().isBlank()) {
+            return null;
+        }
+
+        String request = String.format("""
+            Проанализируй эту запись из КПТ-дневника:
+            
+            "%s"
+            
+            Ответь в формате:
+            1. Какие эмоции ты замечаешь? (1 предложение)
+            2. Есть ли когнитивные искажения? Назови если есть (1-2 искажения максимум)
+            3. Мягкий рефрейм или альтернативная мысль (1-2 предложения)
+            
+            Будь кратким и поддерживающим.
+            """, entry.getText());
+
+        return cbtAiService.ask(request);
+    }
+
+    public String analyzeDream(String dreamContent) {
+        if (dreamContent == null || dreamContent.isBlank()) {
+            return null;
+        }
+
+        String request = String.format("""
+            Пользователь описал сон:
+            "%s"
+            
+            Дай краткую КПТ-интерпретацию (2-3 предложения):
+            - Какие эмоции или темы могут отражать этот сон?
+            - Есть ли связь с дневными переживаниями?
+            Не давай мистических интерпретаций, только психологические.
+            """, dreamContent);
+
+        return cbtAiService.ask(request);
+    }
+
+    public String generateClientSummary(Long clientId) {
+        List<DiaryEntry> recentDiaries = diaryRepository.findAllByUser_IdOrderByCreatedAtDesc(clientId);
         List<MoodEntry> recentMoods = moodRepository.findByUser_IdOrderByDateDesc(clientId);
 
         String diaryContext = recentDiaries.stream()
-                .limit(10) // Последние 10 записей
+                .limit(10)
                 .map(d -> "[" + d.getCreatedAt() + "]: " + d.getText())
                 .collect(Collectors.joining("\n"));
 
@@ -40,20 +77,10 @@ public class AiSummaryService {
                 .map(m -> "[" + m.getDate() + "]: " + m.getMood())
                 .collect(Collectors.joining(", "));
 
-        // 2. Формируем промпт
-        String systemPrompt = """
+        String request = String.format("""
                 Ты - ассистент профессионального психолога. Твоя задача - проанализировать данные клиента за последнюю неделю 
                 и составить краткий отчет (Clinical Summary) для подготовки к сессии.
                 
-                Отчет должен содержать:
-                1. Общий эмоциональный фон.
-                2. Ключевые темы и события, которые волновали клиента.
-                3. Возможные "красные флаги" или темы для обсуждения на сессии.
-                
-                Будь профессионален, лаконичен и используй психологическую терминологию.
-                """;
-
-        String userPrompt = String.format("""
                 Данные клиента:
                 
                 История настроения:
@@ -61,18 +88,15 @@ public class AiSummaryService {
                 
                 Записи в дневнике:
                 %s
+                
+                Отчет должен содержать:
+                1. Общий эмоциональный фон.
+                2. Ключевые темы и события, которые волновали клиента.
+                3. Возможные "красные флаги" или темы для обсуждения на сессии.
+                
+                Будь профессионален, лаконичен и используй психологическую терминологию.
                 """, moodContext, diaryContext);
 
-        try {
-            Prompt prompt = new Prompt(List.of(
-                new SystemMessage(systemPrompt),
-                new UserMessage(userPrompt)
-            ));
-            return chatClient.prompt(prompt)
-                    .call()
-                    .content();
-        } catch (Exception e) {
-            return "Ошибка генерации сводки: " + e.getMessage() + ". (Проверьте API ключ в настройках)";
-        }
+        return cbtAiService.ask(request);
     }
 }

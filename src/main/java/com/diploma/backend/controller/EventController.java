@@ -33,7 +33,7 @@ public class EventController {
             event.setTime(payload.get("time"));
             event.setDate(LocalDate.parse(payload.get("date")));
 
-            // Достаем юзера из базы и привязываем к событию
+            
             Long psychId = Long.valueOf(payload.get("psychologistId"));
             User psych = userRepository.findById(psychId)
                     .orElseThrow(() -> new RuntimeException("Психолог не найден"));

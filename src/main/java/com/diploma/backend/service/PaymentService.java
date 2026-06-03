@@ -18,38 +18,38 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
 
-    // 1. Создание заказа (То, что происходит, когда клиент жмет "Оплатить")
+    
     public PaymentTransaction createPayment(Long userId) {
         PaymentTransaction tx = new PaymentTransaction();
         tx.setUserId(userId);
-        tx.setAmount(2000.00); // 2000 тенге
+        tx.setAmount(2000.00); 
         tx.setStatus("PENDING");
         tx.setProvider("KASPI_SIMULATION");
-        tx.setOrderId(UUID.randomUUID().toString()); // Уникальный номер заказа
+        tx.setOrderId(UUID.randomUUID().toString()); 
 
         return paymentRepository.save(tx);
     }
 
-    // 2. Обработка успешной оплаты (Webhook)
-    // Этот метод будет вызываться Банком (или нашей симуляцией)
+    
+    
     public void processSuccessWebhook(String orderId) {
         PaymentTransaction tx = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Заказ не найден"));
 
         if ("SUCCESS".equals(tx.getStatus())) {
-            return; // Уже оплачено, защиту от дублей
+            return; 
         }
 
-        // 1. Обновляем статус транзакции
+        
         tx.setStatus("SUCCESS");
         tx.setPaidAt(LocalDateTime.now());
         paymentRepository.save(tx);
 
-        // 2. Продлеваем подписку пользователю
+        
         User user = userRepository.findById(tx.getUserId()).orElseThrow();
         LocalDate now = LocalDate.now();
 
-        // Логика продления
+        
         if (user.getSubscriptionEndsAt() != null && user.getSubscriptionEndsAt().isAfter(now)) {
             user.setSubscriptionEndsAt(user.getSubscriptionEndsAt().plusDays(30));
         } else {
@@ -58,7 +58,7 @@ public class PaymentService {
         userRepository.save(user);
     }
 
-    // Проверка статуса (для фронтенда, который ждет оплаты)
+    
     public String checkStatus(String orderId) {
         return paymentRepository.findByOrderId(orderId)
                 .map(PaymentTransaction::getStatus)

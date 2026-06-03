@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import MainScene from '../src/game/MainScene';
-import toast from 'react-hot-toast';
+import { useLanguage } from '../src/i18n/LanguageContext';
 
 export default function PhaserGame({ onExit }) {
     const gameRef = useRef(null);
+    const { t } = useLanguage();
 
     useEffect(() => {
         const config = {
@@ -29,13 +30,13 @@ export default function PhaserGame({ onExit }) {
     }, []);
 
     return (
-        <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', width: '800px', alignItems: 'center' }}>
+        <div className="animate-in phaser-game-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', padding: 'var(--space-md)' }}>
+            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '800px', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div>
-                    <h3 style={{ margin: 0 }}>Ваш Внутренний Мир</h3>
-                    <small style={{ color: 'var(--slate-400)' }}>Используйте стрелки для прогулки. Пробел, чтобы убрать сорняки.</small>
+                    <h3 style={{ margin: 0 }}>{t('world_garden_title')}</h3>
+                    <small style={{ color: 'var(--text-muted)' }}>{t('world_controls_hint')}</small>
                 </div>
-                <button className="btn-secondary" onClick={onExit} style={{ padding: '8px 20px' }}>Вернуться в кабинет</button>
+                <button className="btn-secondary" onClick={onExit} style={{ padding: '8px 20px' }}>{t('world_exit_btn')}</button>
             </div>
 
             <div 
@@ -43,8 +44,10 @@ export default function PhaserGame({ onExit }) {
                 style={{ 
                     borderRadius: '24px', 
                     overflow: 'hidden', 
-                    boxShadow: '0 20px 50px rgba(108, 99, 255, 0.2)',
-                    border: '8px solid var(--white)'
+                    boxShadow: 'var(--shadow-lg)',
+                    border: '8px solid var(--bg-surface)',
+                    maxWidth: '100%',
+                    height: 'auto'
                 }}
             />
         </div>

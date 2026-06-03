@@ -19,13 +19,13 @@ public class PsychologistNoteController {
     private final PsychologistNoteRepository noteRepository;
     private final UserRepository userRepository;
 
-    // 1. ПОЛУЧИТЬ ВСЕ ЗАМЕТКИ ПСИХОЛОГА
+    
     @GetMapping
     public ResponseEntity<List<PsychologistNote>> getNotes(@RequestParam Long psychologistId) {
         return ResponseEntity.ok(noteRepository.findByPsychologistIdOrderByCreatedAtDesc(psychologistId));
     }
 
-    // 2. СОЗДАТЬ НОВУЮ ЗАМЕТКУ
+    
     @PostMapping
     public ResponseEntity<?> createNote(@RequestBody Map<String, Object> payload) {
         try {
@@ -33,13 +33,13 @@ public class PsychologistNoteController {
             note.setTitle((String) payload.get("title"));
             note.setContent((String) payload.get("content"));
 
-            // Привязываем психолога
+            
             Long psychId = Long.valueOf(payload.get("psychologistId").toString());
             User psych = userRepository.findById(psychId)
                     .orElseThrow(() -> new RuntimeException("Психолог не найден"));
             note.setPsychologist(psych);
 
-            // Привязываем клиента (если он выбран)
+            
             Object clientIdObj = payload.get("clientId");
             if (clientIdObj != null && !clientIdObj.toString().trim().isEmpty()) {
                 Long clientId = Long.valueOf(clientIdObj.toString());
@@ -53,7 +53,7 @@ public class PsychologistNoteController {
         }
     }
 
-    // 3. ОБНОВИТЬ СУЩЕСТВУЮЩУЮ ЗАМЕТКУ
+    
     @PutMapping("/{id}")
     public ResponseEntity<PsychologistNote> updateNote(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         PsychologistNote note = noteRepository.findById(id).orElseThrow();
@@ -62,7 +62,7 @@ public class PsychologistNoteController {
         return ResponseEntity.ok(noteRepository.save(note));
     }
 
-    // 4. УДАЛИТЬ ЗАМЕТКУ
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteNote(@PathVariable Long id) {
         noteRepository.deleteById(id);

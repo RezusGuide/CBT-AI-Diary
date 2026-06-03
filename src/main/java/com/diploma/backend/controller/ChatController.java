@@ -22,7 +22,7 @@ public class ChatController {
     private final UserRepository userRepository;
     private final ChatMessageRepository chatMessageRepository;
 
-    // Get conversation history between two users
+    
     @GetMapping("/messages/{partnerId}")
     public ResponseEntity<List<ChatMessage>> getMessages(
             @PathVariable Long partnerId,
@@ -34,7 +34,7 @@ public class ChatController {
         return ResponseEntity.ok(messages);
     }
 
-    // Send a message
+    
     @PostMapping("/messages/{receiverId}")
     public ResponseEntity<ChatMessage> sendMessage(
             @PathVariable Long receiverId,
@@ -57,8 +57,8 @@ public class ChatController {
         return ResponseEntity.ok(chatMessageRepository.save(msg));
     }
 
-    // Get the chat partner for a CLIENT (their psychologist)
-    // or list of clients for a PSYCHOLOGIST
+    
+    
     @GetMapping("/partner")
     public ResponseEntity<?> getChatPartner(@RequestParam Long userId) {
         User me = userRepository.findById(userId).orElseThrow();
@@ -71,7 +71,7 @@ public class ChatController {
     }
 
     private boolean canChat(User a, User b) {
-        // client->psychologist or psychologist->client
+        
         if ("CLIENT".equals(a.getRole()) && "PSYCHOLOGIST".equals(b.getRole()))
             return b.equals(a.getPsychologist());
         if ("PSYCHOLOGIST".equals(a.getRole()) && "CLIENT".equals(b.getRole()))

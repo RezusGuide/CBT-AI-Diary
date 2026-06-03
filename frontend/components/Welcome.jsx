@@ -1,35 +1,36 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../src/i18n/LanguageContext';
 
 export default function Welcome() {
     const navigate = useNavigate();
+    const { t } = useLanguage();
 
     return (
         <div className="auth-page">
-            <div className="auth-card" style={{ maxWidth: '600px', textAlign: 'center' }}>
+            <div className="auth-card" style={{ maxWidth: '600px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
                 <div style={{ fontSize: '4.5rem', marginBottom: 'var(--space-md)' }}>🌿</div>
-                <h1 className="auth-title" style={{ fontSize: '2.8rem', marginBottom: 'var(--space-sm)' }}>
+                <h1 className="auth-title" style={{ fontSize: 'clamp(2rem, 8vw, 2.8rem)', marginBottom: 'var(--space-sm)' }}>
                     CBT AI Diary
                 </h1>
                 <p className="auth-subtitle" style={{ fontSize: '1.15rem', marginBottom: 'var(--space-xl)', lineHeight: '1.7' }}>
-                    Ваше профессиональное пространство для ментального благополучия. 
-                    Инструменты КПТ и поддержка экспертов в одном защищенном приложении.
+                    {t('welcome_subtitle')}
                 </p>
                 
-                <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center' }}>
+                <div className="btn-row" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button 
                         onClick={() => navigate('/login')} 
                         className="btn-primary"
-                        style={{ padding: '12px 32px', fontSize: '1.1rem' }}
+                        style={{ padding: '12px 32px', fontSize: '1.1rem', minWidth: '180px' }}
                     >
-                        Войти в кабинет
+                        {t('welcome_login_btn')}
                     </button>
                     <button 
                         onClick={() => navigate('/register')} 
                         className="btn-secondary"
-                        style={{ padding: '12px 32px', fontSize: '1.1rem' }}
+                        style={{ padding: '12px 32px', fontSize: '1.1rem', minWidth: '180px' }}
                     >
-                        Регистрация
+                        {t('auth_btn_register')}
                     </button>
                 </div>
                 
@@ -41,7 +42,7 @@ export default function Welcome() {
                     fontSize: '0.9rem',
                     fontWeight: '500'
                 }}>
-                    Безопасно • Конфиденциально • Профессионально
+                    {t('welcome_footer')}
                 </div>
             </div>
             

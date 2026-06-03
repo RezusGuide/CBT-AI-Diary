@@ -21,6 +21,7 @@ import PsychologistProfile from './components/PsychologistProfile';
 import Chat from './components/Chat';
 import InnerWorld from './components/InnerWorld';
 import DailyAdvice from './components/DailyAdvice';
+import AiChatPage from './src/pages/AiChatPage';
 import './components/App.css';
 
 // Защита маршрутов по ролям
@@ -57,6 +58,7 @@ function App() {
                 <Route path="/client-assignments" element={<RoleGuard allowedRole="CLIENT"><ClientLayout><ClientAssignments /></ClientLayout></RoleGuard>} />
                 <Route path="/inner-world" element={<RoleGuard allowedRole="CLIENT"><ClientLayout><InnerWorld /></ClientLayout></RoleGuard>} />
                 <Route path="/ai-advice" element={<RoleGuard allowedRole="CLIENT"><ClientLayout><DailyAdvice /></ClientLayout></RoleGuard>} />
+                <Route path="/ai-chat" element={<RoleGuard allowedRole="CLIENT"><ClientLayout><AiChatPage /></ClientLayout></RoleGuard>} />
 
                 {/* ПСИХОЛОГ */}
                 <Route path="/psychologist" element={<RoleGuard allowedRole="PSYCHOLOGIST"><PsychologistLayout><PsychologistHome /></PsychologistLayout></RoleGuard>} />

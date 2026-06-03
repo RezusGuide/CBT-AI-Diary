@@ -1,147 +1,111 @@
-import React, { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
-import API_URL from '../src/api';
+import { useState, useEffect } from 'react';
+import { useLanguage } from '../src/i18n/LanguageContext';
+import { aiApi } from '../src/api/aiApi';
 
 export default function DailyAdvice() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const [advice, setAdvice] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [activeCategory, setActiveCategory] = useState('Все');
+  const { t } = useLanguage();
+  const [advice, setAdvice] = useState('');
+  const [exercise, setExercise] = useState('');
+  const [loadingAdvice, setLoadingAdvice] = useState(true);
+  const [loadingExercise, setLoadingExercise] = useState(false);
+  const [selectedMood, setSelectedMood] = useState('');
 
-    useEffect(() => {
-        if (user.id) fetchAdvice();
-    }, [user.id]);
+  const MOODS = [
+    { label: t('mood_0'), value: 'тревога и беспокойство', emoji: '😰' },
+    { label: t('mood_1'), value: 'грусть и уныние',        emoji: '😔' },
+    { label: t('mood_2'), value: 'раздражение и злость',   emoji: '😤' },
+    { label: t('mood_3'), value: 'усталость и апатия',     emoji: '😴' },
+    { label: t('mood_4'), value: 'стресс от работы',       emoji: '😵' },
+  ];
 
-    const fetchAdvice = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch(API_URL(`/api/ai-advice/daily/${user.id}`));
-            if (!res.ok) {
-                toast.error('Could not generate advice');
-                return;
-            }
-            setAdvice(await res.json());
-        } catch (error) {
-            console.error(error);
-            toast.error('Connection error');
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    fetchAdvice();
+  }, []);
 
-    const categories = ['Все', 'Ментальное', 'Физическое', 'Отношения', 'Карьера'];
+  const fetchAdvice = () => {
+    setLoadingAdvice(true);
+    aiApi.getDailyAdvice()
+      .then(setAdvice)
+      .catch(() => setAdvice(t('ai_advice_error')))
+      .finally(() => setLoadingAdvice(false));
+  };
 
-    return (
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-xl)' }}>
-                <div>
-                    <h1>AI Daily Guide</h1>
-                    <p style={{ color: 'var(--text-muted)' }}>Персональные рекомендации на основе вашего состояния</p>
-                </div>
-                <button onClick={fetchAdvice} className="btn-primary" disabled={loading}>
-                    {loading ? 'Thinking...' : 'Обновить'}
-                </button>
-            </div>
+  const handleGetExercise = async (moodValue) => {
+    setSelectedMood(moodValue);
+    setLoadingExercise(true);
+    try {
+      const ex = await aiApi.getCbtExercise(moodValue);
+      setExercise(ex);
+    } catch {
+      setExercise(t('ai_advice_error'));
+    } finally {
+      setLoadingExercise(false);
+    }
+  };
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-lg)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-                    {loading && !advice ? (
-                        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
-                            <p>Генерация персональных советов...</p>
-                        </div>
-                    ) : advice ? (
-                        <>
-                            <div className="card" style={{ borderLeft: '3px solid var(--accent-primary)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 'var(--space-md)' }}>
-                                    <div style={{ 
-                                        width: '40px', 
-                                        height: '40px', 
-                                        borderRadius: 'var(--radius-full)', 
-                                        background: 'var(--accent-primary-glow)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '20px'
-                                    }}>✨</div>
-                                    <h3 style={{ margin: 0 }}>Рекомендация на день</h3>
-                                </div>
-                                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
-                                    Ваше настроение сегодня: <span style={{ color: 'var(--accent-primary)', fontWeight: '600' }}>{advice.todayMood || 'не выбрано'}</span>
-                                </div>
-                                <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.65, color: 'var(--text-secondary)' }}>
-                                    {advice.advice}
-                                </div>
-                                <div className="divider" />
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span className="badge badge-violet">Психология</span>
-                                    <span style={{ fontSize: '12px', color: 'var(--text-accent)', cursor: 'pointer' }}>Сохранить</span>
-                                </div>
-                            </div>
+  return (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <h1>{t('ai_title')}</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
+          {t('ai_advice_subtitle')}
+        </p>
+      </div>
 
-                            {advice.tasks && advice.tasks.length > 0 && (
-                                <div className="card">
-                                    <h3 className="card-header">Практические задания</h3>
-                                    <ul style={{ listStyle: 'none' }}>
-                                        {advice.tasks.map((task, index) => (
-                                            <li key={index} style={{ 
-                                                display: 'flex', 
-                                                gap: '12px', 
-                                                marginBottom: 'var(--space-sm)',
-                                                color: 'var(--text-secondary)'
-                                            }}>
-                                                <span style={{ color: 'var(--accent-primary)' }}>•</span>
-                                                {task}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="card-header">✨ {t('ai_daily_advice')}</div>
+        {loadingAdvice ? (
+          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>{t('loading')}</div>
+        ) : (
+          <p style={{ fontSize: 14, lineHeight: 1.7, whiteSpace: 'pre-wrap', margin: 0 }}>
+            {advice}
+          </p>
+        )}
+        <button className="btn-secondary"
+          style={{ marginTop: 14, fontSize: 12 }}
+          onClick={fetchAdvice}
+          disabled={loadingAdvice}>
+          🔄 {t('ai_refresh')}
+        </button>
+      </div>
 
-                            {advice.source === 'local' && (
-                                <div className="card" style={{ background: 'rgba(249, 115, 22, 0.05)', borderColor: 'rgba(249, 115, 22, 0.2)' }}>
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--accent-orange)', margin: 0 }}>
-                                        ⚠️ Режим локальной работы. Подключите OpenAI API для более глубокого анализа.
-                                    </p>
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <div className="card" style={{ textAlign: 'center', padding: 'var(--space-2xl)' }}>
-                            <p>Нет доступных советов. Нажмите "Обновить", чтобы сгенерировать их.</p>
-                        </div>
-                    )}
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-                    <div className="card">
-                        <h3 className="card-header">Категории</h3>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {categories.map(cat => (
-                                <span 
-                                    key={cat}
-                                    className={`badge ${activeCategory === cat ? 'badge-violet' : ''}`}
-                                    style={{ 
-                                        cursor: 'pointer',
-                                        background: activeCategory === cat ? 'var(--accent-primary)' : 'var(--bg-overlay)',
-                                        color: activeCategory === cat ? '#fff' : 'var(--text-secondary)',
-                                        border: '1px solid var(--border-subtle)'
-                                    }}
-                                    onClick={() => setActiveCategory(cat)}
-                                >
-                                    {cat}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="card" style={{ background: 'var(--bg-surface-2)' }}>
-                        <h3 className="card-header">Полезно знать</h3>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                            AI анализирует ваши последние записи в дневнике и текущее настроение, чтобы подобрать наиболее актуальные практики КПТ.
-                        </p>
-                    </div>
-                </div>
-            </div>
+      <div className="card">
+        <div className="card-header">🧘 {t('ai_exercise_title')}</div>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 12 }}>
+          {t('ai_exercise_subtitle')}
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+          {MOODS.map(mood => (
+            <button key={mood.value}
+              onClick={() => handleGetExercise(mood.value)}
+              style={{
+                background: selectedMood === mood.value ? 'var(--accent-primary)' : 'var(--bg-surface-2)',
+                color: selectedMood === mood.value ? '#fff' : 'var(--text-secondary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-full)',
+                padding: '6px 14px', fontSize: 12,
+                cursor: 'pointer', transition: 'var(--transition-fast)',
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}>
+              {mood.emoji} {mood.label}
+            </button>
+          ))}
         </div>
-    );
+        {loadingExercise && (
+          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>{t('loading')}</div>
+        )}
+        {exercise && !loadingExercise && (
+          <div style={{
+            background: 'var(--bg-surface-2)',
+            border: '1px solid var(--border-medium)',
+            borderRadius: 'var(--radius-md)',
+            padding: 16, fontSize: 14, lineHeight: 1.7,
+            whiteSpace: 'pre-wrap',
+          }}>
+            {exercise}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

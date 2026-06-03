@@ -1,49 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import API_URL from '../src/api';
+import api from '../src/api/axiosInstance';
+import { useLanguage } from '../src/i18n/LanguageContext';
+import { aiApi } from '../src/api/aiApi';
 
 export default function DreamAnalysis() {
+    const { t } = useLanguage();
     const [dreams, setDreams] = useState([]);
     const [newDream, setNewDream] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [editContent, setEditContent] = useState('');
     const [showForm, setShowForm] = useState(false);
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const [analysisResults, setAnalysisResults] = useState({});
+    const [analyzingIds, setAnalyzingIds] = useState({});
+
+    const userId = localStorage.getItem('userId');
 
     useEffect(() => {
-        if (user.id) fetchDreams();
-    }, [user.id]);
+        if (userId) fetchDreams();
+    }, [userId]);
+
+    const handleAnalyze = async (id, content) => {
+        setAnalyzingIds(prev => ({ ...prev, [id]: true }));
+        try {
+            const result = await aiApi.analyzeDream(content);
+            setAnalysisResults(prev => ({ ...prev, [id]: result }));
+        } catch {
+            toast.error(t('ai_analysis_error'));
+        } finally {
+            setAnalyzingIds(prev => ({ ...prev, [id]: false }));
+        }
+    };
 
     const fetchDreams = async () => {
         try {
-            const res = await fetch(API_URL(`/api/dreams/user/${user.id}`));
-            if (res.ok) {
-                const data = await res.json();
-                const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                setDreams(sorted);
-            }
-        } catch (e) { console.error(e); }
+            const res = await api.get(`/api/dreams/user/${userId}`);
+            const data = res.data;
+            const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setDreams(sorted);
+        } catch (e) { 
+            console.error('Error fetching dreams:', e); 
+        }
     };
 
     const handleCreate = async (e) => {
         e.preventDefault();
         if (!newDream.trim()) return;
 
-        const res = await fetch(API_URL('/api/dreams'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id, text: newDream })
-        });
-
-        if (res.ok) {
+        try {
+            await api.post('/api/dreams', { userId: userId, text: newDream });
             setNewDream('');
             setShowForm(false);
             fetchDreams();
-            toast.success("Сон сохранен 🌙");
-        } else {
-            const message = await res.text();
-            toast.error(message || "Не удалось сохранить сон");
+            toast.success(t('dreams_toast_saved'));
+        } catch (e) {
+            console.error('Error creating dream:', e);
+            const message = e.response?.data || t('dreams_toast_save_error');
+            toast.error(message);
         }
     };
 
@@ -53,29 +67,30 @@ export default function DreamAnalysis() {
     };
 
     const handleUpdate = async (id) => {
-        const res = await fetch(API_URL(`/api/dreams/${id}`), {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: editContent })
-        });
-
-        if (res.ok) {
+        try {
+            await api.put(`/api/dreams/${id}`, { content: editContent });
             setEditingId(null);
             fetchDreams();
-            toast.success("Запись сна обновлена");
+            toast.success(t('dreams_toast_updated'));
+        } catch (e) {
+            console.error('Error updating dream:', e);
+            toast.error(t('error_generic'));
         }
     };
 
     const handleDelete = async (id) => {
-        const res = await fetch(API_URL(`/api/dreams/${id}`), { method: 'DELETE' });
-        if (res.ok) {
+        try {
+            await api.delete(`/api/dreams/${id}`);
             fetchDreams();
-            toast.success("Сон удален");
+            toast.success(t('dreams_toast_deleted'));
+        } catch (e) {
+            console.error('Error deleting dream:', e);
+            toast.error(t('error_generic'));
         }
     };
 
     return (
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
             <div style={{ position: 'relative', marginBottom: 'var(--space-xl)' }}>
                 <div style={{ 
                     position: 'absolute', 
@@ -87,11 +102,11 @@ export default function DreamAnalysis() {
                     zIndex: -1,
                     borderRadius: 'var(--radius-xl)'
                 }}></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 'var(--space-md)' }}>
-                    <h1>Дневник Снов</h1>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 'var(--space-md)', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
+                    <h1>{t('dreams_my_dreams')}</h1>
                     {!showForm && (
                         <button className="btn-primary" onClick={() => setShowForm(true)} style={{ background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' }}>
-                            Записать сон
+                            {t('dreams_record_btn')}
                         </button>
                     )}
                 </div>
@@ -99,25 +114,25 @@ export default function DreamAnalysis() {
 
             {showForm && (
                 <div className="card" style={{ marginBottom: 'var(--space-xl)', borderLeft: '4px solid var(--color-dreams)' }}>
-                    <h3 className="card-header">Новое сновидение</h3>
+                    <h3 className="card-header">{t('dreams_new_dream')}</h3>
                     <form onSubmit={handleCreate}>
                         <textarea
                             className="input-field"
-                            placeholder="Опишите, что вам приснилось..."
+                            placeholder={t('dreams_placeholder')}
                             value={newDream}
                             onChange={(e) => setNewDream(e.target.value)}
                             style={{ height: '120px', marginBottom: 'var(--space-md)', resize: 'none' }}
                             required
                         />
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button type="submit" className="btn-primary" style={{ flex: 1, background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' }}>Сохранить сон</button>
-                            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>Отмена</button>
+                        <div className="btn-row">
+                            <button type="submit" className="btn-primary" style={{ flex: 1, background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' }}>{t('dreams_save_btn')}</button>
+                            <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>{t('cancel')}</button>
                         </div>
                     </form>
                 </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <div className="cards-grid" style={{ gridTemplateColumns: '1fr' }}>
                 {dreams.length === 0 && !showForm && (
                     <div style={{ 
                         height: '200px', 
@@ -128,10 +143,11 @@ export default function DreamAnalysis() {
                         background: 'var(--bg-surface-2)',
                         border: '2px dashed var(--border-medium)',
                         borderRadius: 'var(--radius-xl)',
-                        color: 'var(--text-muted)'
+                        color: 'var(--text-muted)',
+                        gridColumn: '1 / -1'
                     }}>
                         <div style={{ fontSize: '40px', marginBottom: 'var(--space-sm)' }}>🌙</div>
-                        <p>Вы еще не записывали свои сны.</p>
+                        <p>{t('dreams_empty_hint')}</p>
                     </div>
                 )}
 
@@ -142,7 +158,7 @@ export default function DreamAnalysis() {
                                 <span className="badge badge-sky">{new Date(dream.createdAt).toLocaleDateString()}</span>
                                 <span style={{ fontSize: '18px' }}>🌙</span>
                             </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                            <div className="btn-row" style={{ gap: '8px' }}>
                                 <button onClick={() => startEdit(dream)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>✏️</button>
                                 <button onClick={() => handleDelete(dream.id)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px', color: '#f87171' }}>🗑️</button>
                             </div>
@@ -156,14 +172,14 @@ export default function DreamAnalysis() {
                                     onChange={(e) => setEditContent(e.target.value)}
                                     style={{ height: '150px', marginBottom: 'var(--space-md)', resize: 'none' }}
                                 />
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button onClick={() => handleUpdate(dream.id)} className="btn-primary" style={{ background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' }}>Сохранить</button>
-                                    <button onClick={() => setEditingId(null)} className="btn-secondary">Отмена</button>
+                                <div className="btn-row">
+                                    <button onClick={() => handleUpdate(dream.id)} className="btn-primary" style={{ background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)' }}>{t('save')}</button>
+                                    <button onClick={() => setEditingId(null)} className="btn-secondary">{t('cancel')}</button>
                                 </div>
                             </div>
                         ) : (
                             <>
-                                <h3 style={{ marginBottom: 'var(--space-sm)' }}>Сон в {new Date(dream.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</h3>
+                                <h3 style={{ marginBottom: 'var(--space-sm)' }}>{t('dreams_dream_at')} {new Date(dream.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</h3>
                                 <p style={{ 
                                     color: 'var(--text-secondary)', 
                                     whiteSpace: 'pre-wrap',
@@ -176,15 +192,52 @@ export default function DreamAnalysis() {
                                     {dream.content || dream.text}
                                 </p>
                                 <div className="divider" style={{ margin: 'var(--space-sm) 0' }}></div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
                                     <div style={{ display: 'flex', gap: '6px' }}>
-                                        <span className="badge badge-sky">#сновидение</span>
-                                        <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>#подсознание</span>
+                                        <span className="badge badge-sky">#dream</span>
+                                        <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>#subconscious</span>
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                                        <span>Настроение перед сном:</span>
-                                        <span style={{ color: 'var(--color-dreams)' }}>Спокойное 🧘</span>
+                                        <span>{t('dreams_mood_before')}</span>
+                                        <span style={{ color: 'var(--color-dreams)' }}>{t('dreams_mood_calm')}</span>
                                     </div>
+                                </div>
+
+                                <div style={{ marginTop: 'var(--space-md)' }}>
+                                    <button 
+                                        className="btn-secondary" 
+                                        style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                        onClick={() => handleAnalyze(dream.id, dream.content || dream.text)}
+                                        disabled={analyzingIds[dream.id]}
+                                    >
+                                        {analyzingIds[dream.id] ? t('loading') : `✨ ${t('ai_analyze_entry')}`}
+                                    </button>
+                                    
+                                    {analysisResults[dream.id] && (
+                                        <div style={{
+                                            marginTop: 'var(--space-sm)',
+                                            background: 'rgba(56, 189, 248, 0.08)',
+                                            border: '1px solid rgba(56, 189, 248, 0.2)',
+                                            borderRadius: 'var(--radius-md)',
+                                            padding: 'var(--space-md)',
+                                            fontSize: '13px',
+                                            lineHeight: '1.6',
+                                            color: 'var(--text-secondary)',
+                                            whiteSpace: 'pre-wrap'
+                                        }}>
+                                            <div style={{ 
+                                                fontSize: '11px', 
+                                                fontWeight: '700', 
+                                                color: 'var(--color-dreams)',
+                                                marginBottom: '6px', 
+                                                textTransform: 'uppercase', 
+                                                letterSpacing: '0.08em' 
+                                            }}>
+                                                ✨ AI Интерпретация
+                                            </div>
+                                            {analysisResults[dream.id]}
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         )}

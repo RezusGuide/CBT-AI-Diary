@@ -28,7 +28,7 @@ public class DashboardController {
         stats.put("diaryCount", diaryEntryRepository.countByUser_Id(userId));
         stats.put("sleepCount", dreamEntryRepository.countByUser_Id(userId));
         stats.put("taskCount", assignmentRepository.countByClient_Id(userId));
-        stats.put("adviceCount", 5L); // Placeholder for now
+        stats.put("adviceCount", 5L); 
         return ResponseEntity.ok(stats);
     }
 }
