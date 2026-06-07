@@ -4,9 +4,11 @@ import PsychologistSidebar from './PsychologistSidebar';
 import BottomNav from './BottomNav';
 import { Toaster } from 'react-hot-toast';
 import API_URL from '../src/api';
+import { useTheme } from '../src/context/ThemeContext';
 
 export default function PsychologistLayout({ children }) {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
     const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [user, setUser] = useState({});
@@ -41,6 +43,15 @@ export default function PsychologistLayout({ children }) {
                         <div style={{ flex: 1 }}>
                             <div className="top-bar-title">MindSpace Pro</div>
                         </div>
+                        <button 
+                            onClick={toggleTheme}
+                            style={{
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                fontSize: 18, marginRight: 15, display: 'flex', alignItems: 'center'
+                            }}
+                        >
+                            {theme === 'dark' ? '☀️' : '🌙'}
+                        </button>
                         <button onClick={() => navigate('/psychologist/profile')} style={{
                             background: 'none', border: 'none', cursor: 'pointer',
                             display: 'flex', alignItems: 'center'

@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import API_URL from '../src/api';
+import { useTheme } from '../src/context/ThemeContext';
 
 const ClientLayout = ({ children }) => {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
     const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [user, setUser] = useState({});
@@ -38,6 +40,15 @@ const ClientLayout = ({ children }) => {
                         <div style={{ flex: 1 }}>
                             <div className="top-bar-title">MindSpace</div>
                         </div>
+                        <button 
+                            onClick={toggleTheme}
+                            style={{
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                fontSize: 18, marginRight: 15, display: 'flex', alignItems: 'center'
+                            }}
+                        >
+                            {theme === 'dark' ? '☀️' : '🌙'}
+                        </button>
                         <button onClick={() => navigate('/profile')} style={{
                             background: 'none', border: 'none', cursor: 'pointer',
                             display: 'flex', alignItems: 'center'

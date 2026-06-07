@@ -57,6 +57,49 @@
   --transition-normal: all 0.25s ease;
 }
 
+/* ── LIGHT THEME OVERRIDES ── */
+[data-theme="light"] {
+  --bg-base:        #f4f2ff;
+  --bg-surface:     #ffffff;
+  --bg-surface-2:   #f0eeff;
+  --bg-overlay:     rgba(139, 92, 246, 0.06);
+
+  --accent-primary:       #7c3aed;
+  --accent-primary-hover: #6d28d9;
+  --accent-primary-glow:  rgba(124, 58, 237, 0.15);
+  --accent-orange:        #ea6c00;
+  --accent-orange-glow:   rgba(234, 108, 0, 0.12);
+
+  --color-diary:    #7c3aed;
+  --color-dreams:   #0284c7;
+  --color-ai:       #7c3aed;
+  --color-world:    #059669;
+  --color-chat:     #d97706;
+  --color-tasks:    #0d9488;
+  --color-home:     #c026d3;
+
+  --text-primary:   #1a1235;
+  --text-secondary: rgba(26, 18, 53, 0.65);
+  --text-muted:     rgba(26, 18, 53, 0.4);
+  --text-accent:    #6d28d9;
+
+  --border-subtle:  rgba(26, 18, 53, 0.08);
+  --border-medium:  rgba(26, 18, 53, 0.14);
+  --border-strong:  rgba(124, 58, 237, 0.35);
+
+  --shadow-card:    0 2px 16px rgba(26, 18, 53, 0.1);
+  --shadow-glow:    0 0 20px rgba(124, 58, 237, 0.12);
+}
+
+/* ── SMOOTH THEME TRANSITION ── */
+*, *::before, *::after {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+/* But don't animate transforms/opacity (breaks other animations) */
+button, a, .nav-item, .card {
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+              color 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -520,8 +563,8 @@ select.input-field {
 }
 
 select.input-field option {
-  background-color: #1a1825;   
-  color: #f0eeff;              
+  background-color: var(--bg-surface);   
+  color: var(--text-primary);              
 }
 
 .input-label {
@@ -848,6 +891,183 @@ select.input-field option {
 }
 
 
+
+
+/* ── LIGHT THEME COMPONENT FIXES ── */
+
+/* Ambient blobs — lighter in light mode */
+[data-theme="light"] .app-layout::before {
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 65%);
+}
+[data-theme="light"] .app-layout::after {
+  background: radial-gradient(circle, rgba(234, 108, 0, 0.06) 0%, transparent 65%);
+}
+
+/* Sidebar in light mode */
+[data-theme="light"] .sidebar {
+  background: rgba(255, 255, 255, 0.97);
+  border-right-color: var(--border-subtle);
+  box-shadow: 2px 0 16px rgba(26, 18, 53, 0.06);
+}
+
+/* Top bar in light mode (mobile) */
+[data-theme="light"] .top-bar {
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom-color: var(--border-subtle);
+}
+
+/* Bottom nav in light mode (mobile) */
+[data-theme="light"] nav[style*="position: fixed"] {
+  background: rgba(255, 255, 255, 0.97);
+  border-top-color: var(--border-subtle);
+}
+
+/* Cards in light mode */
+[data-theme="light"] .card {
+  background: #ffffff;
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+/* Input fields */
+[data-theme="light"] .input-field {
+  background: #f9f8ff;
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+[data-theme="light"] .input-field:focus {
+  background: #f0eeff;
+  border-color: var(--accent-primary);
+}
+[data-theme="light"] .input-field::placeholder {
+  color: var(--text-muted);
+}
+
+/* Chat messages */
+[data-theme="light"] .message-ai {
+  background: #f0eeff;
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+/* Auth card */
+[data-theme="light"] .auth-card {
+  background: #ffffff;
+  box-shadow: 0 8px 40px rgba(26, 18, 53, 0.12);
+}
+
+/* Scrollbar in light mode */
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.25);
+}
+
+/* Nav item active state */
+[data-theme="light"] .nav-item.active {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-primary);
+}
+[data-theme="light"] .nav-item:hover {
+  background: rgba(124, 58, 237, 0.06);
+}
+
+/* Sidebar user pill */
+[data-theme="light"] .sidebar-user {
+  background: var(--bg-surface-2);
+  border-color: var(--border-subtle);
+}
+[data-theme="light"] .sidebar-user:hover {
+  background: rgba(124, 58, 237, 0.1);
+}
+
+/* Language buttons */
+[data-theme="light"] .lang-btn {
+  background: #f0eeff;
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+
+/* Bottom nav center button */
+[data-theme="light"] .bottom-nav-center {
+  background: #f0eeff;
+  border-color: var(--border-medium);
+}
+
+/* Stat/badge backgrounds */
+[data-theme="light"] .badge-violet {
+  background: rgba(124, 58, 237, 0.1);
+  color: #6d28d9;
+  border-color: rgba(124, 58, 237, 0.2);
+}
+[data-theme="light"] .badge-sky {
+  background: rgba(2, 132, 199, 0.1);
+  color: #0369a1;
+  border-color: rgba(2, 132, 199, 0.2);
+}
+[data-theme="light"] .badge-emerald {
+  background: rgba(5, 150, 105, 0.1);
+  color: #047857;
+  border-color: rgba(5, 150, 105, 0.2);
+}
+[data-theme="light"] .badge-amber {
+  background: rgba(217, 119, 6, 0.1);
+  color: #b45309;
+  border-color: rgba(217, 119, 6, 0.2);
+}
+
+/* AI analysis block */
+[data-theme="light"] .ai-analysis-block {
+  background: rgba(124, 58, 237, 0.05);
+  border-color: rgba(124, 58, 237, 0.15);
+}
+
+/* Mood picker buttons */
+[data-theme="light"] .mood-btn {
+  background: #f9f8ff;
+  border-color: var(--border-subtle);
+}
+[data-theme="light"] .mood-btn:hover,
+[data-theme="light"] .mood-btn.selected {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: var(--accent-primary);
+}
+
+/* Logout button */
+[data-theme="light"] .logout-btn {
+  color: #dc2626;
+}
+[data-theme="light"] .logout-btn:hover {
+  background: rgba(220, 38, 38, 0.08);
+}
+
+/* select dropdown options */
+[data-theme="light"] select.input-field option {
+  background: #ffffff;
+  color: #1a1235;
+}
+
+/* textarea */
+[data-theme="light"] textarea.input-field {
+  background: #f9f8ff;
+}
+
+/* Chat input */
+[data-theme="light"] .chat-input {
+  background: #f0eeff;
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+[data-theme="light"] .chat-container {
+  background: #ffffff;
+  border-color: var(--border-subtle);
+}
+[data-theme="light"] .chat-header {
+  background: #ffffff;
+  border-bottom-color: var(--border-subtle);
+}
+[data-theme="light"] .chat-input-area {
+  background: #ffffff;
+  border-top-color: var(--border-subtle);
+}
 
 
 @media (max-width: 1023px) {

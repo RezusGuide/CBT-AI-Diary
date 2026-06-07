@@ -14,6 +14,9 @@ export const translations = {
     nav_clients:    'My Clients',
     nav_notes:      'Notes',
 
+    theme_light: 'Light mode',
+    theme_dark:  'Dark mode',
+
     
     home_greeting:       'Good day',
     home_morning:        'Good morning',
@@ -354,6 +357,9 @@ export const translations = {
     nav_clients:    'Мои клиенты',
     nav_notes:      'Заметки',
 
+    theme_light: 'Светлая тема',
+    theme_dark:  'Тёмная тема',
+
     home_greeting:       'Добрый день',
     home_morning:        'Доброе утро',
     home_subtitle:       'С возвращением',
@@ -686,6 +692,9 @@ dreams_toast_save_error: 'Не удалось сохранить сон',
     nav_logout:     'Шығу',
     nav_clients:    'Менің клиенттерім',
     nav_notes:      'Жазбалар',
+
+    theme_light: 'Жарық тақырып',
+    theme_dark:  'Қараңғы тақырып',
 
     home_greeting:       'Қайырлы күн',
     home_morning:        'Қайырлы таң',

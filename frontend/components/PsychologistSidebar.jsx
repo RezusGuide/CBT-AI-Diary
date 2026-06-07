@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import API_URL from '../src/api';
 import { useLanguage } from '../src/i18n/LanguageContext';
 import LangSwitcher from './LangSwitcher';
+import ThemeToggle from './ThemeToggle';
 
 const PsychologistSidebar = ({ sidebarOpen, setSidebarOpen }) => {
     const location = useLocation();
@@ -66,6 +67,7 @@ const PsychologistSidebar = ({ sidebarOpen, setSidebarOpen }) => {
             </nav>
 
             <div className="sidebar-footer">
+                <ThemeToggle collapsed={!sidebarOpen} />
                 <LangSwitcher collapsed={!sidebarOpen} />
                 <div className="divider" style={{ margin: '8px 0' }} />
                 <button onClick={handleLogout} className="logout-btn">
